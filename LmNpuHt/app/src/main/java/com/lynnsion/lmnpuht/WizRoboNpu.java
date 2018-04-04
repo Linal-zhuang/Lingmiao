@@ -1432,6 +1432,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
+    @SuppressWarnings("InfiniteLoopStatement")
     private static class GetDataRunnable implements Runnable {
 
         @Override
@@ -1504,6 +1505,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     private static class SetManualVelHandler extends Handler {
         WeakReference<WizRoboNpu> weakReference;
 
@@ -4530,6 +4532,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         adapterTaskList.notifyDataSetChanged();
     }
 
+    @SuppressLint("SetTextI18n")
     private void ChangeWifiUI()
     {
         tv_wifi_strength.setTextColor(Color.rgb(255, 116, 0));
@@ -5076,81 +5079,74 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 dialog.show();
 
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                        .setOnClickListener(new OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                try {
+                                    boolean a;
+                                    String name = et_pathnamex.getText().toString();
+                                    if (name == null || name.length() <= 0) {
+                                    } else {
+                                        dialog.dismiss();
+                                    }
+                                    pathListId.clear();
+                                    ImgPath[] newImgPathList = imgPathList;
+                                    List<ImgPath> imgPaths = new ArrayList<ImgPath>(0);
+                                    if (newImgPathList == null) {
+                                    } else {
+                                        for (int i = 0; i < newImgPathList.length; i++) {
+                                            imgPaths.add(newImgPathList[i]);
+                                        }
+                                    }
+                                    PathInfo newpathinfo = new PathInfo();
+                                    ImgPose[] newimgpose = new ImgPose[pathPoseNum];
+                                    ImgPath newpath = new ImgPath();
+                                    newpathinfo.map_id = mapname;
+                                    newpathinfo.id = name;
+                                    newpathinfo.length = 0;
+                                    newpathinfo.pose_num = pathPoseNum;
+                                     for (int i = 0; i < pathPoseNum; i++) {
+                                         newimgpose[i] = imgPathPose[i];
+                                     }
+                                    newpath.info = newpathinfo;
+                                    newpath.poses = newimgpose;
+                                    imgPaths.add(newpath);
+                                    ImgPath[] newImgPathList1 = new ImgPath[imgPaths.size()];
+                                    for (int i = 0; i < imgPaths.size(); i++) {
+                                        newImgPathList1[i] = imgPaths.get(i);
+                                    }
+                                    mynpu.SetImgPaths(mapname, newImgPathList1);
+                                    for (int i = 0; i < newImgPathList1.length; i++) {
+                                        pathListId.add(newImgPathList1[i].info.id);
+                                    }
+                                    imgPathList = newImgPathList1;
+                                    adapterPathList.notifyDataSetChanged();
+                                    //GetPathList();
+                                    pathPoseNum = 0;
 
-                                                                                     @Override
-                                                                                     public void onClick(View v) {
-                                                                                         try {
-                                                                                             boolean a;
-                                                                                             String name = et_pathnamex.getText().toString();
-                                                                                             if (name == null || name.length() <= 0) {
-                                                                                             } else {
-                                                                                                 dialog.dismiss();
-                                                                                             }
-                                                                                             pathListId.clear();
-                                                                                             ImgPath[] newImgPathList = imgPathList;
-                                                                                             List<ImgPath> imgPaths = new ArrayList<ImgPath>(0);
-
-                                                                                             if (newImgPathList == null) {
-                                                                                             } else {
-                                                                                                 for (int i = 0; i < newImgPathList.length; i++) {
-                                                                                                     imgPaths.add(newImgPathList[i]);
-                                                                                                 }
-                                                                                             }
-                                                                                             PathInfo newpathinfo = new PathInfo();
-                                                                                             ImgPose[] newimgpose = new ImgPose[pathPoseNum];
-                                                                                             ImgPath newpath = new ImgPath();
-                                                                                             newpathinfo.map_id = mapname;
-                                                                                             newpathinfo.id = name;
-                                                                                             newpathinfo.length = 0;
-                                                                                             newpathinfo.pose_num = pathPoseNum;
-
-                                                                                             for (int i = 0; i < pathPoseNum; i++) {
-                                                                                                 newimgpose[i] = imgPathPose[i];
-                                                                                             }
-                                                                                             newpath.info = newpathinfo;
-                                                                                             newpath.poses = newimgpose;
-                                                                                             imgPaths.add(newpath);
-                                                                                             ImgPath[] newImgPathList1 = new ImgPath[imgPaths.size()];
-                                                                                             for (int i = 0; i < imgPaths.size(); i++) {
-                                                                                                 newImgPathList1[i] = imgPaths.get(i);
-                                                                                             }
-                                                                                             mynpu.SetImgPaths(mapname, newImgPathList1);
-
-                                                                                             for (int i = 0; i < newImgPathList1.length; i++) {
-                                                                                                 pathListId.add(newImgPathList1[i].info.id);
-                                                                                             }
-
-
-                                                                                             imgPathList = newImgPathList1;
-                                                                                             adapterPathList.notifyDataSetChanged();
-                                                                                             //GetPathList();
-                                                                                             pathPoseNum = 0;
-
-
-                                                                                             Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
-                                                                                             toast.setGravity(Gravity.CENTER, 0, 0);
-                                                                                             toast.show();
-                                                                                         }
-                                                                                         catch(NpuException e)
-                                                                                         {
-                                                                                             NpuExceptionAlert(e);
-                                                                                             return;
-                                                                                         }
-                                                                                     }
-                                                                                 }
+                                     Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
+                                    toast.setGravity(Gravity.CENTER, 0, 0);
+                                    toast.show();
+                                }
+                                catch(NpuException e)
+                                {
+                                    NpuExceptionAlert(e);
+                                    return;
+                                }
+                            }
+                        }
                 );
 
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        pathPoseNum = 0;
+                        dialog.dismiss();
 
-                                                                                     @Override
-                                                                                     public void onClick(View v) {
-                                                                                         pathPoseNum = 0;
-                                                                                         dialog.dismiss();
-
-                                                                                     }
-                                                                                 }
+                    }
+                }
                 );
             }
         }

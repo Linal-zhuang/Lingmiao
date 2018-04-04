@@ -142,7 +142,8 @@
 				android:layout_alignParentTop="true"
 				android:layout_toLeftOf="@+id/linearLayout2"
 				android:layout_toStartOf="@+id/linearLayout2"
-				android:orientation="horizontal">
+				android:orientation="horizontal"
+				android:visibility="invisible">
 
 				<!--<Button-->
 				<!--android:layout_width="wrap_content"-->
@@ -240,42 +241,6 @@
 
 			</LinearLayout>
 
-
-
-
-			<LinearLayout
-				android:id="@+id/linearLayout3"
-				android:layout_width="150dp"
-				android:layout_height="40dp"
-				android:layout_alignParentBottom="true"
-				android:layout_marginBottom="5dp"
-				android:layout_toStartOf="@+id/linearLayout2"
-				android:orientation="horizontal">
-
-				<ImageButton
-					android:id="@+id/ibt_cancel"
-					android:layout_width="40dp"
-					android:layout_height="40dp"
-					android:layout_alignLeft="@+id/ibt_pause"
-					android:layout_alignParentBottom="true"
-					android:layout_alignStart="@+id/ibt_pause"
-					android:background="@android:color/transparent"
-					android:scaleType="fitCenter"
-					app:srcCompat="@drawable/cancel2" />
-
-				<ImageButton
-					android:id="@+id/ibt_pause"
-					android:layout_width="40dp"
-					android:layout_height="40dp"
-					android:layout_alignParentBottom="true"
-					android:layout_marginLeft="10dp"
-					android:layout_toLeftOf="@+id/cb_lidar_display"
-					android:layout_toStartOf="@+id/cb_lidar_display"
-					android:background="@android:color/transparent"
-					android:scaleType="fitCenter"
-					app:srcCompat="@drawable/stop2" />
-
-			</LinearLayout>
 
 			<LinearLayout
 				android:id="@+id/linearLayout2"
@@ -406,13 +371,23 @@
 			</LinearLayout>
 
 			<com.lynnsion.lmnpuht.JoystickView
-				android:id="@+id/joystickLeft"
+				android:id="@+id/joystickDingdian"
 				android:layout_width="100dp"
 				android:layout_height="100dp"
 				android:layout_alignParentBottom="true"
 				android:layout_marginBottom="20dp"
 				android:layout_marginLeft="20dp"
 				android:elevation="21dp" />
+
+
+
+				<Button
+					android:id="@+id/btn2ActivityDingdian"
+					android:layout_width="wrap_content"
+					android:layout_height="50dp"
+					android:text="设置定点播放"
+					android:layout_alignBottom="@+id/joystickLeft"
+					android:layout_centerHorizontal="true" />
 
 
 			<TextView
@@ -455,8 +430,8 @@
 				android:layout_height="wrap_content"
 				android:layout_alignBottom="@+id/tv_alert"
 				android:text="测试版v1.0.6_1803141100"
-				android:visibility="invisible"
-				android:textColor="@android:color/holo_red_dark" />
+				android:textColor="@android:color/holo_red_dark"
+				android:visibility="invisible"/>
 
 			<TextView
 				android:id="@+id/tv_npu_version"
