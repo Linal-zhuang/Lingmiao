@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/view8"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#B4B3B3" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="1.5dip"
+            android:layout_height="fill_parent"
+            android:background="#B4B3B3" />
+
+        <TextView
+            android:id="@+id/tv_action_id"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="10dip"
+            android:paddingTop="10dip"
+            android:singleLine="true"
+            android:text="动作序号"
+            android:textColor="#000000"
+            android:textSize="10sp" />
+
+        <View
+            android:layout_width="1.5dip"
+            android:layout_height="fill_parent"
+            android:background="#B4B3B3" />
+
+        <Spinner
+            android:id="@+id/sp_action_name"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/spinner" />
+
+        <View
+            android:layout_width="1.5dip"
+            android:layout_height="fill_parent"
+            android:background="#B4B3B3" />
+
+        <Spinner
+            android:id="@+id/sp_action_args"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/spinner" />
+
+        <View
+            android:layout_width="1.5dip"
+            android:layout_height="fill_parent"
+            android:background="#B4B3B3" />
+
+        <EditText
+            android:id="@+id/et_duration_s"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:imeOptions="flagNoExtractUi"
+            android:inputType="numberSigned|numberDecimal"
+            android:paddingBottom="10dip"
+            android:paddingTop="10dip"
+            android:singleLine="true"
+            android:text="0.0"
+            android:textColor="#000000"
+            android:textSize="10sp" />
+
+        <View
+            android:layout_width="1.5dip"
+            android:layout_height="fill_parent"
+            android:background="#B4B3B3" />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/view9"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#B4B3B3" />
+
+</LinearLayout>

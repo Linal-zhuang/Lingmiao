@@ -1,6 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
-    <string name="app_name">LmNpuHt</string>
-
+    <string name="hello" translatable="false">Hello World, HelloWorld</string>
+    <string name="app_name" translatable="false">HTNPU</string>
+    <string name="activity_name" translatable="false">HTAnbaoNpu V5.3.2
+</string>
     <string name="et1" translatable="false">0.00</string>
     <string name="str_m">m</string>
     <string name="str_rad">rad</string>
@@ -66,4 +69,5 @@
     <string name="str_setmultigoal">设置多目标点</string>
     <string name="str_setpathpose">自动添加路径</string>
     <string name="str_savepathpose">保存</string>
+    <string name="title_activity_set_task">SetTask</string>
 </resources>

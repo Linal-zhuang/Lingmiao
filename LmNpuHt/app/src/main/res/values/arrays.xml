@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="checklist_values">
+        <item >navi</item>
+        <item >follow</item>
+        <item >foward</item>
+        <item >backward</item>
+        <item >turnleft</item>
+        <item >turnright</item>
+    </string-array>
+</resources>
+
