@@ -1,5 +1,6 @@
 package com.lynnsion.lmnpuht;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,11 +10,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -38,8 +41,10 @@ import android.os.StrictMode;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -52,6 +57,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -61,6 +67,7 @@ import android.widget.ExpandableListView.OnGroupCollapseListener;
 import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -68,9 +75,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.permission.FloatWindowManager;
+import com.jude.rollviewpager.RollPagerView;
+import com.jude.rollviewpager.adapter.LoopPagerAdapter;
+import com.lynnsion.lmnpuht.Lynnsion.FileUtil;
 import com.wizrobonpu.NpuIceI;
 import com.wizrobonpu.WizRoboNpuUdp;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -114,31 +125,31 @@ import wizrobo_npu.VirtualWallInfo;
 
 
 @SuppressWarnings({"SpellCheckingInspection", "AccessStaticViaInstance", "deprecation", "Convert2Diamond", "ConstantConditions"})
-public  class WizRoboNpu extends AppCompatActivity implements JoystickView.JoystickListener {
-    private Bitmap bm_background=null;
+public class WizRoboNpu extends AppCompatActivity implements JoystickView.JoystickListener, OnClickListener {
+    private Bitmap bm_background = null;
     private ImageView iv_background;
-    private Spinner sp_map_list, sp_path_station_list, sp_virtual_wall_list,sp_path_list,sp_task_list;
+    private Spinner sp_map_list, sp_path_station_list, sp_virtual_wall_list, sp_path_list, sp_task_list;
     private TextView tv_map_info, tv_act_vel, tv_cmd_vel, tv_act_posex, tv_robot_status, tv_act_motor_spd,
-            tv_cmd_motor_spd, tv_ip, tv_wifi_strength, tv_act_enc, tv_alert, tv_npu_version,tv_imu_data;
+            tv_cmd_motor_spd, tv_ip, tv_wifi_strength, tv_act_enc, tv_alert, tv_npu_version, tv_imu_data;
     private CheckBox cb_lidar_display, cb_path_display, cb_station_display;
     private ScrollView sv_control;
-    private ImageButton ibt_delete_map, ibt_pause, ibt_cancel,ibt_save_map;
-    private ExpandableListView elv_operate = null,elv_setting = null,elv_function = null,elv_virtual_wall = null,elv_task_manage = null;
-    private ExpandableListAdapter adapter_operate = null,adapter_setting = null,adapter_function = null,adapter_virtual_wall = null,adapter_task_manage = null;
+    private ImageButton ibt_delete_map, ibt_pause, ibt_cancel, ibt_save_map;
+    private ExpandableListView elv_operate = null, elv_setting = null, elv_function = null, elv_virtual_wall = null, elv_task_manage = null;
+    private ExpandableListAdapter adapter_operate = null, adapter_setting = null, adapter_function = null, adapter_virtual_wall = null, adapter_task_manage = null;
     private static CheckBox cb_cruise_control;
     private TextProgressBar pg_my_progressbar;
-    public  static DisplayMetrics dm = new DisplayMetrics();
+    public static DisplayMetrics dm = new DisplayMetrics();
 
     ExpandableListView tempParent;
     View tempView;
-    public static ViewGroup track_navi_parent,slam_parent;
-    public static View track_navi_view,slam_view;
+    public static ViewGroup track_navi_parent, slam_parent;
+    public static View track_navi_view, slam_view;
     JoystickView joystickView;
 
-    public static String strSavePath = "添加路径",strSaveVirtualWall = "添加虚拟墙", strSetInitialPose = "设置初始点",
-            strSetInitPoseArea = "设置初始区域",strSetGoalPose = "设置目标点",strSetFreePath = "设置自由路径",
-            strSetCoveragePath = "设置清扫区域",strNaviTrack = "开始导航",
-            strSlam = "开始建图",strAddCoverageArea = "添加清扫区域";
+    public static String strSavePath = "添加路径", strSaveVirtualWall = "添加虚拟墙", strSetInitialPose = "设置初始点",
+            strSetInitPoseArea = "设置初始区域", strSetGoalPose = "设置目标点", strSetFreePath = "设置自由路径",
+            strSetCoveragePath = "设置清扫区域", strNaviTrack = "开始导航",
+            strSlam = "开始建图", strAddCoverageArea = "添加清扫区域";
 
     public Map<String, List<String>> operateItemData = ExpandableListData.getData("Operate");
     public List<String> operateTitle = new ArrayList<String>(operateItemData.keySet());
@@ -173,7 +184,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     Station[] stationList;
     ImgPath[] imgPathList = null;
     ImgVirtualWall[] imgVirtualWallList = null;
-    ImgStation[] imgStationList = null;
+    public static ImgStation[] imgStationList = null;
     wizrobo_npu.Path[] pathList;
     Task[] taskList = null;
 
@@ -184,10 +195,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     ImgPoint[] imgPathPoint = new ImgPoint[100];//Limited
     wizrobo_npu.Path path2D = new wizrobo_npu.Path();
     static float resolution = 0.07f, redarrowYaw = 0;
-    static Pose3D pose3D_test = new Pose3D(0,0,0,0,0,0);
+    static Pose3D pose3D_test = new Pose3D(0, 0, 0, 0, 0, 0);
 
     public static ImgPose actImgPose = new ImgPose(0, 0, 0);
-    public static ImuData imuData=null;
+    public static ImuData imuData = null;
     public static Pose3D actPose = new Pose3D(0, 0, 0, 0, 0, 0);
     public static Vel3D actVel = new Vel3D(0, 0, 0, 0, 0, 0);
     public static Vel3D cmdVel = new Vel3D(0, 0, 0, 0, 0, 0);
@@ -202,33 +213,33 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     public static ImgPoint[] FootprintVerticles;
     public static ServerState serverState;
 
-    public static InitPoseArea initPoseArea = new InitPoseArea(pose3D_test,0,0);
-    public static InitImgPoseArea initImgPoseArea = new InitImgPoseArea(null,0,0);
+    public static InitPoseArea initPoseArea = new InitPoseArea(pose3D_test, 0, 0);
+    public static InitImgPoseArea initImgPoseArea = new InitImgPoseArea(null, 0, 0);
 
     static NpuException npuException;
 
-    boolean  displayOnce = false, wifiIsConnected = false,
+    boolean displayOnce = false, wifiIsConnected = false,
             pause = false, toChangeChildView = false, screenIsTouched = false,
             isPoseMode = false, isImgPoseMode = true, isSettingCoveragePath = false,
-            actionMove = false, pointerdown = false, excuteUnfinishedTask =false,toExcuteUnfinishedTask = false,
+            actionMove = false, pointerdown = false, excuteUnfinishedTask = false, toExcuteUnfinishedTask = false,
             isReadThumbnail = false, isToDisplayInitPose = false, toStopGetImgMap = false, pointIsSelected = false,
-            isGettingSensorstatus=false,toGetSensorData=false;
+            isGettingSensorstatus = false, toGetSensorData = false;
 
     public static boolean isJoystickTriggered = false, isTrack = false, isSlam = false, isNavi = false, isSettingStationPath = false,
             toModifyPathXY = false, toModifyPathYaw = false, toRunOnce = true, toConnectNpu = true, isSettingVirtualWall = false,
-            isInited = false,  toFollowAllpaths = false,
-            followOnce = false, isTimeout = false, isSettingPathpose = false,isSettingFreePath = false, isSettingInitialPose = false, isSettingGoalPose = false,isSettingInitPoseArea = false,
-            toGetImgMap = false,toGetParam=false,togetFileInfo=false,toGetSensorStatus=true,toReboot=false,toShutDown=false,toSendFile=false,
-            toSetmapInfos=false,toGetMapInfos=false,mapInfosChanged=false,toCoveragePathPlanning = false;
+            isInited = false, toFollowAllpaths = false,
+            followOnce = false, isTimeout = false, isSettingPathpose = false, isSettingFreePath = false, isSettingInitialPose = false, isSettingGoalPose = false, isSettingInitPoseArea = false,
+            toGetImgMap = false, toGetParam = false, togetFileInfo = false, toGetSensorStatus = true, toReboot = false, toShutDown = false, toSendFile = false,
+            toSetmapInfos = false, toGetMapInfos = false, mapInfosChanged = false, toCoveragePathPlanning = false;
 
     private static float mapEnlargeLevel = 1.0f, mapZoomScare = 1.0f, mapZoomScareTemp = 1.0f, canvasHeight, canvasWidth, initImgPoseU_float,
-            initImgPoseV_float, setImgPoseU_float, setImgPoseV_float,rec_left,rec_top,rec_right,rec_bottom;
+            initImgPoseV_float, setImgPoseU_float, setImgPoseV_float, rec_left, rec_top, rec_right, rec_bottom;
 
-    private ArrayAdapter<String> adapterMapList, adapterPathStationList,adapterPathList, adapterVirtualWallList,adapterTaskList;
-    public static List<String> listMapId, listPathStationId, listVirtualWallId,pathListId,taskListId;
-    public static String mapname = "0",str_npu_version="npu_v1.0";
+    private ArrayAdapter<String> adapterMapList, adapterPathStationList, adapterPathList, adapterVirtualWallList, adapterTaskList;
+    public static List<String> listMapId, listPathStationId, listVirtualWallId, pathListId, taskListId;
+    public static String mapname = "0", str_npu_version = "npu_v1.0";
     private static Matrix currentMatrix = new Matrix(), matrix = new Matrix();
-    private PointF midPoint = new PointF(),startPoint = new PointF();
+    private PointF midPoint = new PointF(), startPoint = new PointF();
     private static Bitmap resizeBmp;
 
     Bitmap backgroundbmp_draw;
@@ -237,10 +248,14 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
     private MODE mode = MODE.NONE;
     private float startDis, mapZoomdx, mapZoomdy, mapDragdx, mapDragdy;
-    private int  coveragePathBordersNum, countTime = 0, progress=0,
+    private int coveragePathBordersNum, countTime = 0, progress = 0,
             actImgposeU, actImgposeV, initImgposeU, initImgposeV, setImgposeU, setImgposeV, robotInitPoseX, robotInitPoseY;
-    private enum MODE {NONE, DRAG, ZOOM};
-    private static int  stationPathNum = 0, wifiStrength = 0, actionDownPointNum=0,pathPoseNum = 0;
+
+
+    private enum MODE {NONE, DRAG, ZOOM}
+
+    ;
+    private static int stationPathNum = 0, wifiStrength = 0, actionDownPointNum = 0, pathPoseNum = 0;
     ///pose class
     private float actPoseX, actPoseY, actPoseYaw, actImgposeTheta, initImgposeTheta, setImgposeTheta,
             initPoseX, initPoseY, initPoseYaw, setPoseX, setPoseY, setPoseYaw;
@@ -294,7 +309,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     ChangeProgressBar();
                     break;
                 case "GetSensorStatus":
-                    toGetSensorStatus=false;
+                    toGetSensorStatus = false;
                     GetSensorStatus();
                     break;
                 case "SetMapInfos":
@@ -320,28 +335,23 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         public void run() {
             UpdateRobotStatus();
             serverState = mynpu.serverState;
-            if(togetFileInfo)
-            {
+            if (togetFileInfo) {
                 SendMessageToUI("GetFile");
             }
 
-            if(toGetSensorStatus)
-            {
+            if (toGetSensorStatus) {
                 SendMessageToUI("GetSensorStatus");
             }
 
-            if(toReboot)
-            {
+            if (toReboot) {
                 SendMessageToUI("Reboot");
             }
 
-            if(toShutDown)
-            {
+            if (toShutDown) {
                 SendMessageToUI("ShutDown");
             }
 
-            if(toSendFile)
-            {
+            if (toSendFile) {
                 SendMessageToUI("SendFile");
             }
 
@@ -377,16 +387,16 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             UpdateActPose();
             UpdateImudata();
 
-            if (isNavi || isSlam ) {
+            if (isNavi || isSlam) {
                 try {
-                    toGetSensorData=false;
+                    toGetSensorData = false;
                     if (mynpu.isInited) {
                         Display();
                         UpdateCmdVel();
                         UpdateActVel();
                         UpdateCmdMotorSpd();
                         UpdateActMotorSpd();
-                         UpdateActEnc();
+                        UpdateActEnc();
                         UpdateActPose();
                         UpdateImudata();
                         if (toChangeChildView) {
@@ -399,8 +409,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 }
             }
 
-            if(toGetSensorData&&!isNavi&&!isSlam)
-            {
+            if (toGetSensorData && !isNavi && !isSlam) {
                 UpdateActEnc();
                 DisplayLidar();
 
@@ -421,6 +430,24 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     };
 
+//读写权限
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE };
+//定点导航
+    private Button btn2Dingdian, btnNext, btnPlayBack, btnPlayStop, btnPlayNext;
+    public static int listCount = 0, dingDianlistItem = 0;
+    public static boolean isDingdianPlaying = false, isNextPlay = false;
+    private Thread dingDianPlayThred;
+
+//图片轮播
+    private LinearLayout linearLayoutPlay;
+    private RollPagerView rollPagerViewPlay;
+    private List<String> listPicPaths = new ArrayList<>();
+    private FileUtil fileUtil = new FileUtil();
+    private final String PICPATHS =  "/mnt/sdcard/tuPian";
+
 
     /**
      * Called when the activity is first created.
@@ -429,6 +456,18 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        verifyStoragePermissions(WizRoboNpu.this);
+        initLayout();
+
+        // get mapName
+        try {
+            imgStationList = mynpu.GetImgStations(mapname);
+        } catch (NpuException e) {
+            e.printStackTrace();
+        }
+
+
         setWifiDormancy();
         setWifiNeverSleep();
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -438,7 +477,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         wl.setReferenceCounted(false);
         wl.acquire();
         InitialUI();
-        joystickView=(JoystickView)findViewById(R.id.joystickLeft);
+        joystickView = (JoystickView) findViewById(R.id.joystickLeft);
         pg_my_progressbar.setProgress(0);
         pg_my_progressbar.setVisibility(View.INVISIBLE);
 
@@ -475,23 +514,21 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         CheckWifiStatus();
                         if (toConnectNpu)
                             ConnectNPU();
-                        if(toSetmapInfos) {
-                            toSetmapInfos=false;
+                        if (toSetmapInfos) {
+                            toSetmapInfos = false;
                             mynpu.SetMapInfos(mapInfoList);
                             SendMessageToUI("SetMapInfos");
                         }
 
-                        if(toGetMapInfos)
-                        {
-                            toGetMapInfos=false;
-                            mapInfoList=mynpu.GetMapInfos();
+                        if (toGetMapInfos) {
+                            toGetMapInfos = false;
+                            mapInfoList = mynpu.GetMapInfos();
                             SendMessageToUI("GetMapInfos");
                         }
 
-                        if(isInited&&toGetSensorData&&!isNavi&&!isSlam)
-                        {
-                            lidarScanData=mynpu.GetLidarScan();
-                            actMotorEnc=mynpu.GetMotorEnc();
+                        if (isInited && toGetSensorData && !isNavi && !isSlam) {
+                            lidarScanData = mynpu.GetLidarScan();
+                            actMotorEnc = mynpu.GetMotorEnc();
                         }
 
                         if (isNavi)
@@ -513,28 +550,28 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         iv_background.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-               // showBig(v);
-                float rel=0;
-                if(!toGetSensorData) {
+                // showBig(v);
+                float rel = 0;
+                if (!toGetSensorData) {
                     if (mapInfo == null || pixelMat == null || mapInfo.offset == null)
                         return false;
-                     rel = mapInfo.resolution;
+                    rel = mapInfo.resolution;
                 }
                 if (mynpu.isInited) {
                     switch (event.getAction() & MotionEvent.ACTION_MASK) {
                         case MotionEvent.ACTION_DOWN: //Click select map
-                            actionDownPointNum+=1;
+                            actionDownPointNum += 1;
                             screenIsTouched = true;
                             mode = MODE.DRAG;
                             startPoint.set(event.getX(), event.getY());
                             currentMatrix.set(iv_background.getImageMatrix());
-                            if(!toGetSensorData) {
+                            if (!toGetSensorData) {
                                 float x = (float) (((event.getX() + mapZoomdx) / mapZoomScare - mapDragdx) / mapEnlargeLevel * rel / pixelMat.ratio + mapInfo.offset.x);
                                 initPoseX = x;
                                 setPoseX = x;
                                 float y = (float) ((pixelMat.height - ((event.getY() + mapZoomdy) / mapZoomScare - mapDragdy) / mapEnlargeLevel) * rel / pixelMat.ratio + mapInfo.offset.y);
                                 initPoseY = y;
-                                setPoseY  = y;
+                                setPoseY = y;
                                 int imgposeu = (int) (((event.getX() + mapZoomdx) / mapZoomScare - mapDragdx) / mapEnlargeLevel);
                                 initImgPoseU_float = ((event.getX() + mapZoomdx) / mapZoomScare - mapDragdx) / mapEnlargeLevel;   // improve displaying precision
                                 setImgPoseU_float = initImgPoseU_float;  // improve displaying precision
@@ -567,27 +604,23 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         case MotionEvent.ACTION_POINTER_DOWN:
                             pointerdown = true;
                             actionDownPointNum++;
-                            if(actionDownPointNum>=3)
-                            {
-                                if(!isSettingInitialPose && !isSettingGoalPose && !isSettingPathpose && !isSettingFreePath && !isSettingCoveragePath)
-                                {
+                            if (actionDownPointNum >= 3) {
+                                if (!isSettingInitialPose && !isSettingGoalPose && !isSettingPathpose && !isSettingFreePath && !isSettingCoveragePath) {
                                     Toast toast = Toast.makeText(getApplicationContext(), "请用两个手指进行缩放！", Toast.LENGTH_LONG);
                                     toast.setGravity(Gravity.CENTER, 0, 0);
                                     toast.show();
                                 }
                             }
 
-                            if(actionDownPointNum>=2)
-                            {
-                                if(isSettingInitialPose || isSettingGoalPose || isSettingPathpose || isSettingFreePath || isSettingCoveragePath)
-                                {
+                            if (actionDownPointNum >= 2) {
+                                if (isSettingInitialPose || isSettingGoalPose || isSettingPathpose || isSettingFreePath || isSettingCoveragePath) {
                                     Toast toast = Toast.makeText(getApplicationContext(), "设置状态下不能平移/缩放！", Toast.LENGTH_LONG);
                                     toast.setGravity(Gravity.CENTER, 0, 0);
                                     toast.show();
                                 }
                             }
 
-                            if (!isSettingInitialPose && !isSettingGoalPose && !isSettingPathpose && !isSettingFreePath && !isSettingCoveragePath&&actionDownPointNum==2) {
+                            if (!isSettingInitialPose && !isSettingGoalPose && !isSettingPathpose && !isSettingFreePath && !isSettingCoveragePath && actionDownPointNum == 2) {
                                 mode = MODE.ZOOM;
                                 actionMove = false;
                                 startDis = Distance(event);
@@ -597,7 +630,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                             }
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            if (mode == MODE.DRAG&&actionDownPointNum<=2) {
+                            if (mode == MODE.DRAG && actionDownPointNum <= 2) {
                                 if (isSettingInitialPose || isSettingGoalPose || isSettingPathpose || isSettingFreePath || isSettingCoveragePath || isSettingVirtualWall || isSettingInitPoseArea) {
                                     actionMove = false;
                                     if (isSettingInitialPose) {
@@ -622,19 +655,17 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                             return false;
                                         imgPathPose[pathPoseNum - 1].theta = poseYaw;
                                         redarrowYaw = poseYaw;
-                                    }
-                                    else if(isSettingInitPoseArea)
-                                    {
-                                        float left,top,right,bottom;
+                                    } else if (isSettingInitPoseArea) {
+                                        float left, top, right, bottom;
                                         right = ((event.getX() + mapZoomdx) / mapZoomScare - mapDragdx) / mapEnlargeLevel;
                                         top = ((event.getY() + mapZoomdy) / mapZoomScare - mapDragdy) / mapEnlargeLevel;
                                         left = ((startPoint.x + mapZoomdx) / mapZoomScare - mapDragdx) / mapEnlargeLevel;
                                         bottom = ((startPoint.y + mapZoomdy) / mapZoomScare - mapDragdy) / mapEnlargeLevel;
 
 
-                                        initImgPoseArea.pose = new ImgPose((int)(left+right)/2,(int)(top+bottom)/2,0);
-                                        initImgPoseArea.width =(int) Math.abs(left-right);
-                                        initImgPoseArea.height =(int) Math.abs(top-bottom);
+                                        initImgPoseArea.pose = new ImgPose((int) (left + right) / 2, (int) (top + bottom) / 2, 0);
+                                        initImgPoseArea.width = (int) Math.abs(left - right);
+                                        initImgPoseArea.height = (int) Math.abs(top - bottom);
 
                                         rec_left = left;
                                         rec_bottom = bottom;
@@ -647,15 +678,13 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                         bottom = (float) ((pixelMat.height - ((startPoint.y + mapZoomdy) / mapZoomScare - mapDragdy) / mapEnlargeLevel) * rel / pixelMat.ratio + mapInfo.offset.y);
                                         Pose3D pose3D = new Pose3D();
 
-                                        if(right < left)
-                                        {
+                                        if (right < left) {
                                             float temp = left;
                                             left = right;
                                             right = temp;
                                         }
 
-                                        if(top < bottom)
-                                        {
+                                        if (top < bottom) {
                                             float temp = bottom;
                                             bottom = top;
                                             top = temp;
@@ -666,15 +695,12 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                         InitPoseArea poseArea = new InitPoseArea();
                                         poseArea.pose = pose3D;
                                         //initPoseArea.pose.y = startPoint.y;
-                                        poseArea.height = top - bottom ;
+                                        poseArea.height = top - bottom;
                                         poseArea.width = right - left;
                                         initPoseArea = poseArea;
+                                    } else {
                                     }
-                                    else {
-                                    }
-                                }
-                                else
-                                {
+                                } else {
 
                                     actionMove = true;
                                     float dxtmp = event.getX() - startPoint.x;
@@ -684,8 +710,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                     iv_background.setImageMatrix(matrix);
 
                                 }
-                            } else if (mode == MODE.ZOOM&&actionDownPointNum==2) {
-                                actionMove=false;
+                            } else if (mode == MODE.ZOOM && actionDownPointNum == 2) {
+                                actionMove = false;
                                 float endDis = Distance(event);
                                 if (endDis > 1f) {
                                     float scale = endDis / startDis;
@@ -709,24 +735,24 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                             break;
                         case MotionEvent.ACTION_UP:
                             pointerdown = false;
-                            if (mode == MODE.DRAG && actionMove == true&&actionDownPointNum==1) {
+                            if (mode == MODE.DRAG && actionMove == true && actionDownPointNum == 1) {
                                 actionMove = false;
                                 mapDragdx = mapDragdx + (event.getX() - startPoint.x) / mapZoomScareTemp;
                                 mapDragdy = mapDragdy + (event.getY() - startPoint.y) / mapZoomScareTemp;
                                 mode = MODE.NONE;
                             }
 
-                            if (mode == MODE.ZOOM&&actionDownPointNum<=2) {
+                            if (mode == MODE.ZOOM && actionDownPointNum <= 2) {
                                 mapZoomScare = mapZoomScareTemp;
                                 mapZoomdx = (mapZoomScare - 1) * midPoint.x;
                                 mapZoomdy = (mapZoomScare - 1) * midPoint.y;
                                 mode = MODE.NONE;
                             }
-                            if(actionDownPointNum>2)
-                            actionDownPointNum--;
+                            if (actionDownPointNum > 2)
+                                actionDownPointNum--;
 
-                            else{
-                                actionDownPointNum=0;
+                            else {
+                                actionDownPointNum = 0;
                             }
                             break;
                     }
@@ -835,13 +861,12 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     case MotionEvent.ACTION_DOWN: //Click select map
                         if (mynpu.isInited) {
                             try {
-                                toGetSensorData=false;
-                                if(mapInfoList == null||mapInfosChanged == true) {
-                                    mapInfosChanged=false;
+                                toGetSensorData = false;
+                                if (mapInfoList == null || mapInfosChanged == true) {
+                                    mapInfosChanged = false;
                                     listMapId.clear();
                                     toGetMapInfos = true;
-                                }
-                                else{
+                                } else {
                                     listMapId.clear();
                                     GetMapInfos();
                                 }
@@ -931,9 +956,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                             GetTaskList();
                             if (taskList == null || taskList.length == 0)
                                 return false;
-                        }
-                        catch (Exception e)
-                        {
+                        } catch (Exception e) {
                             NormalException(e);
                         }
                         break;
@@ -948,7 +971,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             public void onItemSelected(AdapterView<?> parent,
                                        View view, int position, long id) {
                 if (WizRoboNpu.isInited) {
-                    if (taskList == null||taskList.length==0)
+                    if (taskList == null || taskList.length == 0)
                         return;
                     adapterTaskList.notifyDataSetChanged();
                 }
@@ -1030,13 +1053,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                             adapter_operate.getChildView(0, 3, true, v, parent);
                         }
 
-                        if(groupPosition == 0 && childPosition == 4)
-                        {
+                        if (groupPosition == 0 && childPosition == 4) {
                             SetStationPath();
                         }
 
-                        if(groupPosition == 0 && childPosition == 5)
-                        {
+                        if (groupPosition == 0 && childPosition == 5) {
                             SaveStationPath();
                         }
 
@@ -1064,10 +1085,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     }
 
 
-
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     NormalException(e);
                 }
                 return false;
@@ -1177,13 +1195,13 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
 
                 if (groupPosition == 0 && childPosition == 0 && !isSlam) {
-                    if(isInited) {
+                    if (isInited) {
                         TrackNavi();
                     }
                 }
 
                 if (groupPosition == 0 && childPosition == 1 && !isNavi && !isTrack) {
-                    if(isInited) {
+                    if (isInited) {
                         SlamMap();
                     }
                 }
@@ -1263,7 +1281,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
                 if (groupPosition == 0 && childPosition == 1) {
 
-                    Intent intent = new Intent(WizRoboNpu.this,SetTask.class);
+                    Intent intent = new Intent(WizRoboNpu.this, SetTask.class);
                     startActivity(intent);
 
                 }
@@ -1273,7 +1291,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         });
 
 
-        cb_cruise_control.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+        cb_cruise_control.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             public void onCheckedChanged(CompoundButton buttonView,
                                          boolean isChecked) {
@@ -1287,14 +1305,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         if (mynpu.isInited)
                             mynpu.SetManualVel(0, 0);
                     }
-                }
-                catch (NpuException e) {
-                    npuException=e;
+                } catch (NpuException e) {
+                    npuException = e;
                     SendMessageToUI("NpuException");
-                }
-
-                catch (Exception e)
-                {
+                } catch (Exception e) {
 
                 }
             }
@@ -1304,6 +1318,85 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
     }
+
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btnDingdianPlay:
+//                linearLayoutPlay.setVisibility(View.VISIBLE);
+                dingDianPlay();
+                break;
+            case R.id.btnNext:
+                if (isNextPlay == false) {
+                    isNextPlay = true;
+                    new Thread(dingDianplayRunnable2).start();
+                }
+                break;
+            case R.id.btnPlayBack:
+                break;
+            case R.id.btnPlayStop:
+
+                break;
+            case R.id.btnPlayNext:
+//                if (isNextPlay == false) {
+//                    isNextPlay = true;
+//                    new Thread(dingDianplayRunnable2).start();
+//                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void initLayout() {
+        btn2Dingdian = (Button) findViewById(R.id.btnDingdianPlay);
+        btn2Dingdian.setOnClickListener(this);
+
+        btnNext = (Button) findViewById(R.id.btnNext);
+        btnNext.setOnClickListener(this);
+
+        btnPlayBack = (Button) findViewById(R.id.btnPlayBack);
+        btnPlayBack.setOnClickListener(this);
+
+        btnPlayStop = (Button) findViewById(R.id.btnPlayStop);
+        btnPlayStop.setOnClickListener(this);
+
+        btnPlayNext = (Button) findViewById(R.id.btnPlayNext);
+        btnPlayNext.setOnClickListener(this);
+
+        linearLayoutPlay = (LinearLayout) findViewById(R.id.linearlayoutRollPageView);
+
+        rollPagerViewPlay = (RollPagerView) findViewById(R.id.rpvPicturePlay);
+
+    }
+
+    private class ImageLoopAdapter extends LoopPagerAdapter {
+
+        public ImageLoopAdapter(RollPagerView viewPager) {
+            super(viewPager);
+        }
+
+        @Override
+        public View getView(ViewGroup container, int position) {
+            ImageView view = new ImageView(container.getContext());
+            view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            view.setImageBitmap(getDiskBitmap(listPicPaths.get(position)));
+            return view;
+        }
+
+
+
+        @Override
+        public int getRealCount() {
+            if(listPicPaths != null){
+                return listPicPaths.size();
+            }
+            return 0;
+        }
+    }
+
 
     @SuppressWarnings("Convert2Diamond")
     private void InitialUI() {
@@ -1348,8 +1441,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         tv_act_enc = (TextView) findViewById(R.id.tv_act_enc);
         tv_alert = (TextView) findViewById(R.id.tv_alert);
         tv_alert.setVisibility(View.INVISIBLE);
-        tv_npu_version=(TextView) findViewById(R.id.tv_npu_version);
-        tv_imu_data=(TextView) findViewById(R.id.tv_imu_data);
+        tv_npu_version = (TextView) findViewById(R.id.tv_npu_version);
+        tv_imu_data = (TextView) findViewById(R.id.tv_imu_data);
 
         //Add imageview
         iv_background = (ImageView) findViewById(R.id.iv_background);
@@ -1445,24 +1538,18 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     else
                         Thread.currentThread().sleep(1000);
 
-                    try
-                    {
+                    try {
                         mynpu.CheckAbnormalInfo();
-                    }
-                    catch(NpuException e)
-                    {
-                        npuException=e;
+                    } catch (NpuException e) {
+                        npuException = e;
                         System.out.println(e.msg);
                     }
 
-                    if (toGetImgMap&&!toGetParam) {
+                    if (toGetImgMap && !toGetParam) {
                         if (!isTimeout && mynpu.isInited) {
                             try {
                                 imgMap = mynpu.GetCurrentImgMap();
-                            }
-
-                            catch(Ice.ConnectionLostException e)
-                            {
+                            } catch (Ice.ConnectionLostException e) {
                             }
                         }
                     }
@@ -1471,25 +1558,22 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     actVel = mynpu.GetActVel();
                     cmdMotorSpd = mynpu.GetCmdMotorSpd();
                     actMotorSpd = mynpu.GetActMotorSpd();
-                    actMotorEnc=mynpu.GetMotorEnc();
+                    actMotorEnc = mynpu.GetMotorEnc();
                     naviState = mynpu.GetNaviState();
                     actPose = mynpu.GetCurrentPose();
                     actImgPose = mynpu.GetCurrentImgPose();
                     FootprintVerticles = mynpu.GetFootprintImgVertices();
                     imglidarscandata = mynpu.GetImgLidarScan();
 
-                    if (isNavi || isSlam ) {
-                        if (!isTimeout&&!toGetParam) {
+                    if (isNavi || isSlam) {
+                        if (!isTimeout && !toGetParam) {
                             if (mynpu.isInited) {
                                 try {
-                                    imuData=mynpu.GetImuData();
+                                    imuData = mynpu.GetImuData();
                                     if (WizRoboNpu.isNavi) {
                                         cmdImgPath = mynpu.GetCmdImgPath();
                                     }
-                                }
-
-                                catch(Ice.ConnectionLostException e)
-                                {
+                                } catch (Ice.ConnectionLostException e) {
                                 }
                             }
                         }
@@ -1528,26 +1612,26 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             while (true) {
                 try {
                     Thread.currentThread().sleep(100);
-                        if (!isTimeout&&!toGetParam) {
-                            try {
-                                int newTimeout = 30000;
-                                NpuIcePrx newProxy = (NpuIcePrx)mynpu.npu.ice_timeout(newTimeout);
-                                if (cb_cruise_control.isChecked()) {
-                                    newProxy.SetManualVel(0.99f, 0);
-                                }
-
-                                if (isJoystickTriggered && serverState != ServerState.TIMEOUT) {
-                                    toRunOnce = true;
-                                    newProxy.SetManualVel(linScale, angScale);
-                                } else {
-                                    if (toRunOnce) {
-                                        newProxy.SetManualVel(0, 0);
-                                        toRunOnce = false;
-                                    }
-                                }
-                            } catch (Exception e) {
+                    if (!isTimeout && !toGetParam) {
+                        try {
+                            int newTimeout = 30000;
+                            NpuIcePrx newProxy = (NpuIcePrx) mynpu.npu.ice_timeout(newTimeout);
+                            if (cb_cruise_control.isChecked()) {
+                                newProxy.SetManualVel(0.99f, 0);
                             }
+
+                            if (isJoystickTriggered && serverState != ServerState.TIMEOUT) {
+                                toRunOnce = true;
+                                newProxy.SetManualVel(linScale, angScale);
+                            } else {
+                                if (toRunOnce) {
+                                    newProxy.SetManualVel(0, 0);
+                                    toRunOnce = false;
+                                }
+                            }
+                        } catch (Exception e) {
                         }
+                    }
 
 
                     setManualVelHandler.sendEmptyMessage(MESSAGECODE);
@@ -1582,7 +1666,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     @Override
     protected void onStart() {
 
-        if(!isInited) {
+        if (!isInited) {
             ConnectivityManager manager = (ConnectivityManager) this
                     .getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = manager.getActiveNetworkInfo();
@@ -1624,7 +1708,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 builder.show();
             }
         }
-        toGetParam=false;
+        toGetParam = false;
         super.onStart();
     }
 
@@ -1663,9 +1747,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     }
                 }
             }
-        }
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
             return;
         }
@@ -1675,7 +1757,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         try {
             if (isNavi)  //Standard Navi Mode
             {
-                if (!isSettingGoalPose && !isSettingInitialPose &&!isSettingInitPoseArea) {
+                if (!isSettingGoalPose && !isSettingInitialPose && !isSettingInitPoseArea) {
                     screenIsTouched = false;
                     isSettingGoalPose = true;
                     strSetGoalPose = "确定";
@@ -1719,16 +1801,14 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
                                                                                                  public void onClick(View v) {
-                             ImgPose pose = imgpose;
-                             try {
-                                 mynpu.GotoImgGoal(pose);
-                                 dialog.dismiss();
-                             }
-                             catch(NpuException e)
-                             {
-                                 NpuExceptionAlert(e);
-                                 return;
-                             }
+                                                                                                     ImgPose pose = imgpose;
+                                                                                                     try {
+                                                                                                         mynpu.GotoImgGoal(pose);
+                                                                                                         dialog.dismiss();
+                                                                                                     } catch (NpuException e) {
+                                                                                                         NpuExceptionAlert(e);
+                                                                                                         return;
+                                                                                                     }
                                                                                                  }
                                                                                              }
                             );
@@ -1746,9 +1826,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     }
                 }
             }
-        }
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
             return;
         }
@@ -1771,15 +1849,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     mynpu.SetInitImgPoseArea(initImgPoseArea);
                 }
             }
-        }
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
             return;
-        }
-
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             NormalException(e);
         }
     }
@@ -1824,9 +1897,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     newPointList = null;
                 }
             }
-        }
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
             return;
         }
@@ -1872,9 +1943,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     adapter_setting.getChildView(0, 4, true, tempView, tempParent);
                 }
             }
-        }
-        catch (NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
     }
@@ -1905,9 +1974,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         SendMessageToUI("ChangeVirtualWallUI");
                         SendMessageToUI("ChangePathUI");
                         SendMessageToUI("ChangeTaskUI");
-                    }
-
-                    catch (NpuException e) {
+                    } catch (NpuException e) {
                         npuException = e;
                         SendMessageToUI("NpuException");
                         return;
@@ -1919,9 +1986,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     Delay(2000);
                     SendMessageToUI("ChangeNaviUI");
                 }
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 ExceptionAlert(e);
             }
 
@@ -1973,8 +2038,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     private void Slam() {
         try {
             if (mynpu.isInited) {
-                if (!isSlam)
-                {
+                if (!isSlam) {
 
                     toGetSensorData = false;
                     imgMap = null;
@@ -1990,15 +2054,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     }
                     Delay(1000);
                     SendMessageToUI("ChangeSlamUI");
-                }
-                else
-                {
+                } else {
                     SendMessageToUI("ChangeSlamUI");
                 }
             }
-        }
-        catch (NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
     }
@@ -2057,7 +2117,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 pathPoseNum = 0;
                 setImgposeU = 0;
                 setImgposeV = 0;
-                redarrowYaw=0;
+                redarrowYaw = 0;
                 setImgposeTheta = 0;
                 setImgPoseU_float = 0;
                 setImgPoseV_float = 0;
@@ -2091,69 +2151,67 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
-                 @Override
-                 public void onClick(View v) {
-                     try {
-                         boolean a;
-                         String name = et_pathnamex.getText().toString();
-                         if (name == null || name.length() <= 0) {
-                         } else {
-                             dialog.dismiss();
-                         }
+                                                                                     @Override
+                                                                                     public void onClick(View v) {
+                                                                                         try {
+                                                                                             boolean a;
+                                                                                             String name = et_pathnamex.getText().toString();
+                                                                                             if (name == null || name.length() <= 0) {
+                                                                                             } else {
+                                                                                                 dialog.dismiss();
+                                                                                             }
 
-                         System.out.println("IS SAVING PATH");
-                         pathListId.clear();
-                         ImgPath[] newImgPathList = imgPathList;
-                         List<ImgPath> imgPaths = new ArrayList<ImgPath>(0);
+                                                                                             System.out.println("IS SAVING PATH");
+                                                                                             pathListId.clear();
+                                                                                             ImgPath[] newImgPathList = imgPathList;
+                                                                                             List<ImgPath> imgPaths = new ArrayList<ImgPath>(0);
 
-                         if (newImgPathList == null) {
-                             System.out.println("Is Adding");
-                         } else {
-                             for (int i = 0; i < newImgPathList.length; i++) {
-                                 imgPaths.add(newImgPathList[i]);
-                             }
-                         }
-                         PathInfo newpathinfo = new PathInfo();
-                         ImgPose[] newimgpose = new ImgPose[pathPoseNum];
-                         ImgPath newpath = new ImgPath();
-                         newpathinfo.map_id = mapname;
-                         newpathinfo.id = name;
-                         newpathinfo.length = 0;
-                         newpathinfo.pose_num = pathPoseNum;
+                                                                                             if (newImgPathList == null) {
+                                                                                                 System.out.println("Is Adding");
+                                                                                             } else {
+                                                                                                 for (int i = 0; i < newImgPathList.length; i++) {
+                                                                                                     imgPaths.add(newImgPathList[i]);
+                                                                                                 }
+                                                                                             }
+                                                                                             PathInfo newpathinfo = new PathInfo();
+                                                                                             ImgPose[] newimgpose = new ImgPose[pathPoseNum];
+                                                                                             ImgPath newpath = new ImgPath();
+                                                                                             newpathinfo.map_id = mapname;
+                                                                                             newpathinfo.id = name;
+                                                                                             newpathinfo.length = 0;
+                                                                                             newpathinfo.pose_num = pathPoseNum;
 
-                         for (int i = 0; i < pathPoseNum; i++) {
-                             newimgpose[i] = imgPathPose[i];
-                             System.out.println("imgpathpose:" + imgPathPose[i].theta);
-                         }
-                         newpath.info = newpathinfo;
-                         newpath.poses = newimgpose;
-                         imgPaths.add(newpath);
-                         ImgPath[] newImgPathList1 = new ImgPath[imgPaths.size()];
-                         for (int i = 0; i < imgPaths.size(); i++) {
-                             newImgPathList1[i] = imgPaths.get(i);
-                         }
-                         mynpu.SetImgPaths(mapname, newImgPathList1);
+                                                                                             for (int i = 0; i < pathPoseNum; i++) {
+                                                                                                 newimgpose[i] = imgPathPose[i];
+                                                                                                 System.out.println("imgpathpose:" + imgPathPose[i].theta);
+                                                                                             }
+                                                                                             newpath.info = newpathinfo;
+                                                                                             newpath.poses = newimgpose;
+                                                                                             imgPaths.add(newpath);
+                                                                                             ImgPath[] newImgPathList1 = new ImgPath[imgPaths.size()];
+                                                                                             for (int i = 0; i < imgPaths.size(); i++) {
+                                                                                                 newImgPathList1[i] = imgPaths.get(i);
+                                                                                             }
+                                                                                             mynpu.SetImgPaths(mapname, newImgPathList1);
 
-                         for (int i = 0; i < newImgPathList1.length; i++) {
-                             pathListId.add(newImgPathList1[i].info.id);
-                         }
+                                                                                             for (int i = 0; i < newImgPathList1.length; i++) {
+                                                                                                 pathListId.add(newImgPathList1[i].info.id);
+                                                                                             }
 
 
-                         imgPathList = newImgPathList1;
-                         adapterPathList.notifyDataSetChanged();
-                         pathPoseNum = 0;
+                                                                                             imgPathList = newImgPathList1;
+                                                                                             adapterPathList.notifyDataSetChanged();
+                                                                                             pathPoseNum = 0;
 
-                         Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
-                         toast.setGravity(Gravity.CENTER, 0, 0);
-                         toast.show();
-                     }
-                     catch(NpuException e)
-                     {
-                         NpuExceptionAlert(e);
-                         return;
-                     }
-                 }
-             }
+                                                                                             Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
+                                                                                             toast.setGravity(Gravity.CENTER, 0, 0);
+                                                                                             toast.show();
+                                                                                         } catch (NpuException e) {
+                                                                                             NpuExceptionAlert(e);
+                                                                                             return;
+                                                                                         }
+                                                                                     }
+                                                                                 }
                 );
 
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
@@ -2194,59 +2252,58 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
-             @Override
-             public void onClick(View v) {
-                 try {
-                     boolean a;
-                     String name = et_stationnamex.getText().toString();
-                     if (name == null || name.length() <= 0) {
+                                                                                 @Override
+                                                                                 public void onClick(View v) {
+                                                                                     try {
+                                                                                         boolean a;
+                                                                                         String name = et_stationnamex.getText().toString();
+                                                                                         if (name == null || name.length() <= 0) {
 
-                     } else {
-                         dialog.dismiss();
-                     }
+                                                                                         } else {
+                                                                                             dialog.dismiss();
+                                                                                         }
 
-                     listPathStationId.clear();
-                     ImgStation[] newImgStationList = imgStationList;
-                     List<ImgStation> imgStations = new ArrayList<ImgStation>(0);
-                     if (newImgStationList == null) {
-                     } else {
-                         for (int i = 0; i < newImgStationList.length; i++) {
-                             imgStations.add(newImgStationList[i]);
-                         }
-                     }
+                                                                                         listPathStationId.clear();
+                                                                                         ImgStation[] newImgStationList = imgStationList;
+                                                                                         List<ImgStation> imgStations = new ArrayList<ImgStation>(0);
+                                                                                         if (newImgStationList == null) {
+                                                                                         } else {
+                                                                                             for (int i = 0; i < newImgStationList.length; i++) {
+                                                                                                 imgStations.add(newImgStationList[i]);
+                                                                                             }
+                                                                                         }
 
-                     StationInfo newstationinfo = new StationInfo();
-                     ImgPose newimgpose = new ImgPose();
-                     ImgStation newstation = new ImgStation();
-                     newstationinfo.map_id = mapname;
-                     newstationinfo.id = name;
-                     newstationinfo.type = StationType.USER_DEFINED;
-                     newstationinfo.artag_id = 0;
-                     newimgpose = actImgPose;
-                     newstation.info = newstationinfo;
-                     newstation.pose = newimgpose;
-                     imgStations.add(newstation);
-                     ImgStation[] newImgStationList1 = new ImgStation[imgStations.size()];
-                     for (int i = 0; i < imgStations.size(); i++) {
-                         newImgStationList1[i] = imgStations.get(i);
-                     }
-                     mynpu.SetImgStations(mapname, newImgStationList1);
+                                                                                         StationInfo newstationinfo = new StationInfo();
+                                                                                         ImgPose newimgpose = new ImgPose();
+                                                                                         ImgStation newstation = new ImgStation();
+                                                                                         newstationinfo.map_id = mapname;
+                                                                                         newstationinfo.id = name;
+                                                                                         newstationinfo.type = StationType.USER_DEFINED;
+                                                                                         newstationinfo.artag_id = 0;
+                                                                                         newimgpose = actImgPose;
+                                                                                         newstation.info = newstationinfo;
+                                                                                         newstation.pose = newimgpose;
+                                                                                         imgStations.add(newstation);
+                                                                                         ImgStation[] newImgStationList1 = new ImgStation[imgStations.size()];
+                                                                                         for (int i = 0; i < imgStations.size(); i++) {
+                                                                                             newImgStationList1[i] = imgStations.get(i);
+                                                                                         }
+                                                                                         mynpu.SetImgStations(mapname, newImgStationList1);
 
-                     for (int i = 0; i < newImgStationList1.length; i++) {
-                         listPathStationId.add(newImgStationList1[i].info.id);
-                     }
-                     imgStationList = newImgStationList1;
-                     adapterPathStationList.notifyDataSetChanged();
-                     Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
-                     toast.setGravity(Gravity.CENTER, 0, 0);
-                     toast.show();
-                 }
-                 catch (NpuException e) {
-                     npuException=e;
-                     SendMessageToUI("NpuException");
-                 }
-             }
-         }
+                                                                                         for (int i = 0; i < newImgStationList1.length; i++) {
+                                                                                             listPathStationId.add(newImgStationList1[i].info.id);
+                                                                                         }
+                                                                                         imgStationList = newImgStationList1;
+                                                                                         adapterPathStationList.notifyDataSetChanged();
+                                                                                         Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
+                                                                                         toast.setGravity(Gravity.CENTER, 0, 0);
+                                                                                         toast.show();
+                                                                                     } catch (NpuException e) {
+                                                                                         npuException = e;
+                                                                                         SendMessageToUI("NpuException");
+                                                                                     }
+                                                                                 }
+                                                                             }
             );
         }
     }
@@ -2254,7 +2311,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     private OnClickListener Ibt_DeleteMap_OnClick = new OnClickListener() {
         public void onClick(View v) {
             if (mynpu.isInited) {
-                if (mapInfoList == null||mapInfoList.length==0)
+                if (mapInfoList == null || mapInfoList.length == 0)
                     return;
                 new AlertDialog.Builder(WizRoboNpu.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                         .setTitle(R.string.str_warming)
@@ -2267,13 +2324,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                             DialogInterface dialoginterface,
                                             int i) {
                                         if (isInited) {
-                                            if(mapInfoList.length<=1)
-                                            {
+                                            if (mapInfoList.length <= 1) {
                                                 Toast toast = Toast.makeText(getApplicationContext(), "NPU内置地图，无法删除！", Toast.LENGTH_LONG);
                                                 toast.setGravity(Gravity.CENTER, 0, 0);
                                                 toast.show();
-                                            }
-                                            else {
+                                            } else {
                                                 listMapId.clear();
                                                 List<MapInfo> mapInfos = new ArrayList<MapInfo>(0);
                                                 if (mapInfoList == null || mapInfoList.length == 0)
@@ -2283,7 +2338,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                                 }
 
                                                 mapInfos.remove(sp_map_list.getSelectedItemPosition());
-                                                mapInfoList=new MapInfo[mapInfos.size()];
+                                                mapInfoList = new MapInfo[mapInfos.size()];
                                                 for (int j = 0; j < mapInfos.size(); j++) {
                                                     mapInfoList[j] = mapInfos.get(j);
                                                 }
@@ -2297,7 +2352,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                                 Toast toast = Toast.makeText(getApplicationContext(), "正在删除地图 ...", Toast.LENGTH_SHORT);
                                                 toast.setGravity(Gravity.CENTER, 0, 0);
                                                 toast.show();
-                                                toSetmapInfos=true;
+                                                toSetmapInfos = true;
 
                                             }
 
@@ -2332,7 +2387,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                 dialog.dismiss();
                             }
                         })
-                        .setPositiveButton("确定",null)
+                        .setPositiveButton("确定", null)
                         .setCancelable(true)
                         .create();
                 dialog.show();
@@ -2358,17 +2413,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                                                                              }
 
 
-
                                                                                              dialog.dismiss();
 
-                                                                                         }
-                                                                                         catch(NpuException e)
-                                                                                         {
+                                                                                         } catch (NpuException e) {
                                                                                              NpuExceptionAlert(e);
-                                                                                         }
-
-                                                                                         catch (Exception e)
-                                                                                         {
+                                                                                         } catch (Exception e) {
                                                                                              NormalException(e);
                                                                                          }
                                                                                      }
@@ -2381,8 +2430,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
     private OnClickListener Ibt_Pause_OnClick = new OnClickListener() {
         public void onClick(View v) {
-            try
-            {
+            try {
                 if (mynpu.isInited) {
 
                     if (!pause) {
@@ -2394,13 +2442,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         pause = true;
                     } else {
                         ibt_pause.setImageResource(R.drawable.stop2);
-                        if(toExcuteUnfinishedTask)
-                        {
-                            toExcuteUnfinishedTask =false;
-                            mynpu.FollowPath(mapname,"unfinished_path");
-                        }
-                        else
-                        mynpu.ContinueTask();
+                        if (toExcuteUnfinishedTask) {
+                            toExcuteUnfinishedTask = false;
+                            mynpu.FollowPath(mapname, "unfinished_path");
+                        } else
+                            mynpu.ContinueTask();
                         Toast toast = Toast.makeText(getApplicationContext(), "继续执行任务中... ", Toast.LENGTH_SHORT);
                         toast.setGravity(Gravity.CENTER, 0, 0);
                         toast.show();
@@ -2409,9 +2455,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
 
                 }
-            }
-            catch(NpuException e)
-            {
+            } catch (NpuException e) {
                 NpuExceptionAlert(e);
                 return;
             }
@@ -2421,17 +2465,14 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
     private OnClickListener Ibt_Cancel_OnClick = new OnClickListener() {
         public void onClick(View v) {
-            try
-            {
+            try {
                 if (mynpu.isInited) {
                     mynpu.CancelTask();
                     Toast toast = Toast.makeText(getApplicationContext(), "已停止执行任务! ", Toast.LENGTH_SHORT);
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
                 }
-            }
-            catch(NpuException e)
-            {
+            } catch (NpuException e) {
                 NpuExceptionAlert(e);
                 return;
             }
@@ -2440,8 +2481,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
 
     private void DeletePath() {
-        if (isInited ) {
-            if(imgPathList==null ||imgPathList.length==0)
+        if (isInited) {
+            if (imgPathList == null || imgPathList.length == 0)
                 return;
             new AlertDialog.Builder(WizRoboNpu.this)
                     .setTitle(R.string.str_warming)
@@ -2479,9 +2520,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                         Toast toast = Toast.makeText(getApplicationContext(), "删除完成！", Toast.LENGTH_LONG);
                                         toast.setGravity(Gravity.CENTER, 0, 0);
                                         toast.show();
-                                    }
-                                    catch(NpuException e)
-                                    {
+                                    } catch (NpuException e) {
                                         NpuExceptionAlert(e);
                                         return;
                                     }
@@ -2500,7 +2539,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     private void DeleteVirtualWall() {
         if (isNavi) {
 
-            if(imgVirtualWallList==null||imgVirtualWallList.length==0)
+            if (imgVirtualWallList == null || imgVirtualWallList.length == 0)
                 return;
             new AlertDialog.Builder(WizRoboNpu.this)
                     .setTitle(R.string.str_warming)
@@ -2537,10 +2576,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                         Toast toast = Toast.makeText(getApplicationContext(), "删除完成！", Toast.LENGTH_LONG);
                                         toast.setGravity(Gravity.CENTER, 0, 0);
                                         toast.show();
-                                    }
-
-                                    catch (NpuException e) {
-                                        npuException=e;
+                                    } catch (NpuException e) {
+                                        npuException = e;
                                         SendMessageToUI("NpuException");
                                     }
                                 }
@@ -2595,9 +2632,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                         Toast toast = Toast.makeText(getApplicationContext(), "删除中...", Toast.LENGTH_LONG);
                                         toast.setGravity(Gravity.CENTER, 0, 0);
                                         toast.show();
-                                    }
-                                    catch (NpuException e) {
-                                        npuException=e;
+                                    } catch (NpuException e) {
+                                        npuException = e;
                                         SendMessageToUI("NpuException");
                                     }
                                 }
@@ -2633,26 +2669,24 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             dialog.show();
 
             //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setOnClickListener(new OnClickListener() {
 
-                 @Override
-                 public void onClick(View v) {
-                     if (imgStationList == null || imgStationList.length == 0)
-                         return;
-                     try
-                     {
-                         mynpu.GotoStation(mapname, sp_path_station_list.getSelectedItem().toString());
-                         dialog.dismiss();
-                     }
-                     catch (NpuException e)
-                     {
-                         NpuExceptionAlert(e);
-                     }
+                                            @Override
+                                            public void onClick(View v) {
+                                                if (imgStationList == null || imgStationList.length == 0)
+                                                    return;
+                                                try {
+                                                    mynpu.GotoStation(mapname, sp_path_station_list.getSelectedItem().toString());
+                                                    dialog.dismiss();
+                                                } catch (NpuException e) {
+                                                    NpuExceptionAlert(e);
+                                                }
 
 
-                 }
-             }
-            );
+                                            }
+                                        }
+                    );
 
             //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
@@ -2704,11 +2738,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
                                                                                  @Override
                                                                                  public void onClick(View v) {
-             boolean a;
-             String name = et_pathnamex.getText().toString();
-             if (name == null || name.length() <= 0) {
+                                                                                     boolean a;
+                                                                                     String name = et_pathnamex.getText().toString();
+                                                                                     if (name == null || name.length() <= 0) {
 
-             } else {
+                                                                                     } else {
 //                 a = SpecialSymbols(name);
 //                 if (a) {
 //                     Toast toast = Toast.makeText(getApplicationContext(), "不能包含*&%$#@!等特殊字符", Toast.LENGTH_SHORT);
@@ -2716,44 +2750,42 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 //                     toast.show();
 //                     return;
 //                 }
-                 dialog.dismiss();
-             }
-             try {
+                                                                                         dialog.dismiss();
+                                                                                     }
+                                                                                     try {
 
-                 if (stationPathNum == 0)
-                     return;
-                 pathList = mynpu.GetPaths(mapname);
-                 if (pathList == null)
-                     return;
-                 wizrobo_npu.Path[] newPathList = new wizrobo_npu.Path[pathList.length + 1];
-                 for (int i = 0; i < pathList.length; i++) {
-                     newPathList[i] = pathList[i];
-                 }
+                                                                                         if (stationPathNum == 0)
+                                                                                             return;
+                                                                                         pathList = mynpu.GetPaths(mapname);
+                                                                                         if (pathList == null)
+                                                                                             return;
+                                                                                         wizrobo_npu.Path[] newPathList = new wizrobo_npu.Path[pathList.length + 1];
+                                                                                         for (int i = 0; i < pathList.length; i++) {
+                                                                                             newPathList[i] = pathList[i];
+                                                                                         }
 
-                 Pose3D[] poses = new Pose3D[stationPathNum];
-                 for (int i = 0; i < stationPathNum; i++) {
-                     poses[i] = stationPathPose[i];
-                 }
-                 PathInfo newPathInfo = new PathInfo(mapname, name, 0, 0);
-                 wizrobo_npu.Path newpath = new wizrobo_npu.Path(newPathInfo, poses);
-                 newPathList[pathList.length] = newpath;
+                                                                                         Pose3D[] poses = new Pose3D[stationPathNum];
+                                                                                         for (int i = 0; i < stationPathNum; i++) {
+                                                                                             poses[i] = stationPathPose[i];
+                                                                                         }
+                                                                                         PathInfo newPathInfo = new PathInfo(mapname, name, 0, 0);
+                                                                                         wizrobo_npu.Path newpath = new wizrobo_npu.Path(newPathInfo, poses);
+                                                                                         newPathList[pathList.length] = newpath;
 
-                 mynpu.SetPaths(mapname, newPathList);
-                 stationPathNum = 0;
-                 isSettingStationPath = false;
-                 Toast toast = Toast.makeText(getApplicationContext(), "保存成功！", Toast.LENGTH_LONG);
-                 toast.setGravity(Gravity.CENTER, 0, 0);
-                 toast.show();
-                 GetPathStationList();
-                 newPathList = null;
-                 newPathInfo = null;
-             }
-             catch (NpuException e)
-             {
-                 NpuExceptionAlert(e);
-             }
+                                                                                         mynpu.SetPaths(mapname, newPathList);
+                                                                                         stationPathNum = 0;
+                                                                                         isSettingStationPath = false;
+                                                                                         Toast toast = Toast.makeText(getApplicationContext(), "保存成功！", Toast.LENGTH_LONG);
+                                                                                         toast.setGravity(Gravity.CENTER, 0, 0);
+                                                                                         toast.show();
+                                                                                         GetPathStationList();
+                                                                                         newPathList = null;
+                                                                                         newPathInfo = null;
+                                                                                     } catch (NpuException e) {
+                                                                                         NpuExceptionAlert(e);
+                                                                                     }
 
-         }
+                                                                                 }
                                                                              }
             );
         }
@@ -2765,8 +2797,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             String name;
             if (imgPathList == null || imgPathList.length == 0)
                 return;
-            if(imgPathList[sp_path_list.getSelectedItemPosition()].info.id.contains("cov_"))
-            {
+            if (imgPathList[sp_path_list.getSelectedItemPosition()].info.id.contains("cov_")) {
                 new AlertDialog.Builder(WizRoboNpu.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                         .setTitle("提示")
                         //.setIcon(R.drawable.warming)
@@ -2776,24 +2807,21 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                     public void onClick(
                                             DialogInterface dialoginterface,
                                             int i) {
-                                        try
-                                        {
+                                        try {
                                             int length = imgPathList[sp_path_list.getSelectedItemPosition()].poses.length;
                                             ImgPose[] imgPoses = imgPathList[sp_path_list.getSelectedItemPosition()].poses;
-                                            if( length == 0)
+                                            if (length == 0)
                                                 return;
                                             ImgPoint[] newPointList = new ImgPoint[length];
-                                            for(int j = 0; j<length; j++)
-                                            {
+                                            for (int j = 0; j < length; j++) {
                                                 ImgPoint point = new ImgPoint();
 
                                                 point.u = imgPoses[j].u;
                                                 point.v = imgPoses[j].v;
                                                 newPointList[j] = point;
                                             }
-                                            mynpu.PlanCoverageImgPath(newPointList);                                        }
-                                        catch(NpuException e)
-                                        {
+                                            mynpu.PlanCoverageImgPath(newPointList);
+                                        } catch (NpuException e) {
                                             NpuExceptionAlert(e);
                                         }
                                     }
@@ -2805,9 +2833,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                             int i) {
                                     }
                                 }).show();
-            }
-            else
-            {
+            } else {
                 ImgPose[] imagePoses = imgPathList[sp_path_list.getSelectedItemPosition()].poses;
                 ImgPose imgPose = imagePoses[imagePoses.length - 1];
                 if (Math.abs(imgPose.u - actImgPose.u) < 5 || Math.abs(imgPose.v - actImgPose.v) < 5) {
@@ -2825,12 +2851,9 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                     public void onClick(
                                             DialogInterface dialoginterface,
                                             int i) {
-                                        try
-                                        {
+                                        try {
                                             mynpu.FollowPath(mapname, sp_path_list.getSelectedItem().toString());
-                                        }
-                                        catch(NpuException e)
-                                        {
+                                        } catch (NpuException e) {
                                             NpuExceptionAlert(e);
                                         }
                                     }
@@ -2878,14 +2901,12 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     toConnectNpu = false;
                 }
             }
-        }
+        } catch (NpuException e) {
 
-        catch (NpuException e) {
-
-             toConnectNpu=false;
-             System.out.println("NpuException:"+e.msg);
-             npuException=e;
-             SendMessageToUI("NpuException");
+            toConnectNpu = false;
+            System.out.println("NpuException:" + e.msg);
+            npuException = e;
+            SendMessageToUI("NpuException");
         }
     }
 
@@ -2896,7 +2917,9 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    };
+    }
+
+    ;
 
     // Update ui function
     private void UpdateCmdMotorSpd() {
@@ -2934,7 +2957,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     }
 
     private void UpdateActPose() {
-        if (isSlam || isNavi ) {
+        if (isSlam || isNavi) {
             if (isPoseMode) {
                 DecimalFormat fnum = new DecimalFormat("##0.00");
                 actPoseX = actPose.x;
@@ -2971,20 +2994,18 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
-    private void UpdateImudata()
-    {
-        if(isNavi)
-        {
-            if(imuData==null)
+    private void UpdateImudata() {
+        if (isNavi) {
+            if (imuData == null)
                 return;
-            tv_imu_data.setText("IMU:"+imuData.yaw_deg);
+            tv_imu_data.setText("IMU:" + imuData.yaw_deg);
         }
     }
 
     private void UpdateActEnc() {
         if (mynpu.isInited) {
             MotorEnc actenc = actMotorEnc;
-            if(actMotorEnc==null||actMotorEnc.motor_num==0||actenc.ticks.length==0)
+            if (actMotorEnc == null || actMotorEnc.motor_num == 0 || actenc.ticks.length == 0)
                 return;
             tv_act_enc.setText("码盘数值：" + Integer.toString(actenc.ticks[0]) + ", " + Integer.toString(actenc.ticks[1]));
         }
@@ -2994,8 +3015,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         if (mynpu.isInited) {
             tv_robot_status.setTextColor(Color.rgb(255, 116, 0));
             tv_robot_status.setText("NPU状态:" + naviState.name());
-            if(npuException != null)
-            {
+            if (npuException != null) {
                 tv_robot_status.setTextColor(Color.rgb(207, 42, 48));
                 tv_robot_status.setText("NPU状态:" + npuException.msg);
                 //tv_robot_status.setTextColor(Color.rgb(255, 116, 0));
@@ -3015,8 +3035,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             try {
                 isInited = true;
                 isTimeout = false;
-                str_npu_version=mynpu.GetServerVersion();
-                str_npu_version=str_npu_version.substring(0,23);
+                str_npu_version = mynpu.GetServerVersion();
+                str_npu_version = str_npu_version.substring(0, 23);
                 SendMessageToUI("GetServerVersion");
                 ActionState actionState = mynpu.GetActionState();
                 if (actionState == ActionState.SLAM_ACTION) {
@@ -3046,7 +3066,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 ReadImgMap();
             }
 
-            if ( bm_background == null) {
+            if (bm_background == null) {
                 if (isSlam || isNavi) {
                     Toast toast = Toast.makeText(getApplicationContext(), "地图刷新中...", Toast.LENGTH_SHORT);
                     toast.setGravity(Gravity.CENTER, 0, 0);
@@ -3107,7 +3127,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             DisplayFootprintVertices(canvas, paint);
             DisplayLidarPoints(canvas, paint);
             DisplayInitPose(canvas, paint);
-            DisplayInitPoseArea(canvas,paint);
+            DisplayInitPoseArea(canvas, paint);
             if (toCoveragePathPlanning) {
                 DisplayCppBorders(canvas, paint);
             }
@@ -3131,9 +3151,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             backgroundbmp_draw = null;
             resizeBmp = null;
             canvas = null;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             ExceptionAlert(e);
         }
 
@@ -3180,7 +3198,6 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         lidarpointdata[2 * i] = (float) points[i].u;
                         lidarpointdata[2 * i + 1] = (float) points[i].v;
                     }
-
 
 
                     paint.setColor(Color.RED);
@@ -3231,16 +3248,14 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     imgPoints = null;
                 }
             }
-        }
-        catch (NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
     }
 
     private void DisplayCmdPath(Canvas canvas, Paint paint) {
         //*************************DisplayCmdPath****************************
-        if (isNavi ) {
+        if (isNavi) {
             if (isPoseMode) {
                 path2D = cmdPath;             //Display the path
                 Pose3D[] pose;
@@ -3341,9 +3356,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     pathData = null;
                 }
             }
-        }
-        catch (NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
     }
@@ -3389,8 +3402,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
                 for (int k = 0; k < imgPathList.length; k++) {
 
-                    if(imgPathList[k].info.id.contains("unfinished_path") && !excuteUnfinishedTask)
-                    {
+                    if (imgPathList[k].info.id.contains("unfinished_path") && !excuteUnfinishedTask) {
                         excuteUnfinishedTask = true;
                         DetectUnfinishedTask();
                     }
@@ -3670,24 +3682,22 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
-    private void DisplayInitPoseArea(Canvas canvas, Paint paint)
-    {
-        if(isSettingInitPoseArea && initPoseArea != null)
-        {
+    private void DisplayInitPoseArea(Canvas canvas, Paint paint) {
+        if (isSettingInitPoseArea && initPoseArea != null) {
             paint.setColor(Color.BLUE);
             paint.setStrokeWidth(1.0f);
             paint.setStyle(Paint.Style.STROKE);
-            float left =initPoseArea.pose.x;
-            float top = initPoseArea.pose.y-initPoseArea.height;
-            float right = initPoseArea.pose.x+initPoseArea.width;
+            float left = initPoseArea.pose.x;
+            float top = initPoseArea.pose.y - initPoseArea.height;
+            float right = initPoseArea.pose.x + initPoseArea.width;
             float bottom = initPoseArea.pose.y;
 
             left = (float) ((left - mapInfo.offset.x) / resolution * pixelMat.ratio);
-            top  = (float) ((pixelMat.height - (top - mapInfo.offset.y) / resolution * pixelMat.ratio));
+            top = (float) ((pixelMat.height - (top - mapInfo.offset.y) / resolution * pixelMat.ratio));
             right = (float) ((right - mapInfo.offset.x) / resolution * pixelMat.ratio);
-            bottom  = (float) ((pixelMat.height - (bottom - mapInfo.offset.y) / resolution * pixelMat.ratio));
+            bottom = (float) ((pixelMat.height - (bottom - mapInfo.offset.y) / resolution * pixelMat.ratio));
             //canvas.drawLine();
-            canvas.drawRect(rec_left,rec_top,rec_right,rec_bottom,paint);
+            canvas.drawRect(rec_left, rec_top, rec_right, rec_bottom, paint);
         }
     }
 
@@ -3829,7 +3839,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         try {
             float dx = event.getX(1) - event.getX(0);
             float dy = event.getY(1) - event.getY(0);
-            System.out.println("mapZoom_dxdy:"+dx+"  "+dy);
+            System.out.println("mapZoom_dxdy:" + dx + "  " + dy);
 
             return (float) Math.sqrt(dx * dx + dy * dy);
         } catch (IllegalArgumentException e) {
@@ -3915,8 +3925,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     if (pathPoseNum == 0)
                         return;
                     imgPathPose[pathPoseNum - 1].theta = redarrowYaw;
-                }
-                else {
+                } else {
                     isJoystickTriggered = true;
                     if (Math.abs(linScale) < 0.3)
                         linScale = 0;
@@ -4022,6 +4031,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
         return false;
     }
+
     /**
      * 监听对话框里面的button点击事件
      */
@@ -4051,12 +4061,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         super.onConfigurationChanged(config);
     }
 
-    public void NpuExceptionAlert(NpuException e)
-    {
-                new AlertDialog.Builder(WizRoboNpu.this,AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+    public void NpuExceptionAlert(NpuException e) {
+        new AlertDialog.Builder(WizRoboNpu.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle(R.string.str_warming)
                 //.setIcon(R.drawable.warming)
-                .setMessage("异常："+e.msg)
+                .setMessage("异常：" + e.msg)
                 .setPositiveButton(R.string.str_ok,
                         new DialogInterface.OnClickListener() {
                             public void onClick(
@@ -4075,24 +4084,22 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         }).show();
     }
 
-    public void ExceptionAlert(Exception e )
-    {
-        isNavi=false;
-        isSlam=false;
-        isTimeout=true;
-        isInited=false;
-        getDataHandler1.removeCallbacksAndMessages( null );
-        getDataHandler.removeCallbacksAndMessages( null );
-        setManualVelHandler.removeCallbacksAndMessages( null );
-        toConnectNpu=true;
+    public void ExceptionAlert(Exception e) {
+        isNavi = false;
+        isSlam = false;
+        isTimeout = true;
+        isInited = false;
+        getDataHandler1.removeCallbacksAndMessages(null);
+        getDataHandler.removeCallbacksAndMessages(null);
+        setManualVelHandler.removeCallbacksAndMessages(null);
+        toConnectNpu = true;
     }
 
-    public void NormalException(Exception e)
-    {
-        new AlertDialog.Builder(WizRoboNpu.this,AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+    public void NormalException(Exception e) {
+        new AlertDialog.Builder(WizRoboNpu.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle(R.string.str_warming)
                 //.setIcon(R.drawable.warming)
-                .setMessage("异常："+e.toString())
+                .setMessage("异常：" + e.toString())
                 .setPositiveButton(R.string.str_ok,
                         new DialogInterface.OnClickListener() {
                             public void onClick(
@@ -4111,9 +4118,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                         }).show();
     }
 
-    public void ConnectFailed()
-    {
-        new AlertDialog.Builder(WizRoboNpu.this,AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+    public void ConnectFailed() {
+        new AlertDialog.Builder(WizRoboNpu.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle("连接失败")
                 //.setIcon(R.drawable.warming)
                 .setMessage("请检查NPU及网络连接是否正常，长按屏幕重新连接！")
@@ -4122,15 +4128,14 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                             public void onClick(
                                     DialogInterface dialoginterface,
                                     int i) {
-                              toConnectNpu=true;
-                              displayOnce=false;
+                                toConnectNpu = true;
+                                displayOnce = false;
                             }
                         }).show();
     }
 
-    public void SetInitPoseAlert()
-    {
-        new AlertDialog.Builder(WizRoboNpu.this,AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+    public void SetInitPoseAlert() {
+        new AlertDialog.Builder(WizRoboNpu.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle("确认初始位置")
                 //.setIcon(R.drawable.warming)
                 .setMessage("请先确认地图上的机器人位置与实际位置是否匹配，重设请到#设置#栏点击设置初始位置。")
@@ -4145,13 +4150,11 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
     public static void setListViewHeightBasedOnChildren(ExpandableListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
-        if (listAdapter == null)
-        {
+        if (listAdapter == null) {
             return;
         }
         int totalHeight = 0;
-        for (int i = 0; i < listAdapter.getCount(); i++)
-        {
+        for (int i = 0; i < listAdapter.getCount(); i++) {
             View listItem = listAdapter.getView(i, null, listView);
             listItem.measure(0, 0);
             totalHeight += listItem.getMeasuredHeight();
@@ -4163,80 +4166,59 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         listView.setLayoutParams(params);
     }
 
-    private void GetPathStationList()
-    {
-        try
-        {
+    private void GetPathStationList() {
+        try {
 
             if (isInited && isNavi) {
                 imgStationList = mynpu.GetImgStations(mapname);
                 SendMessageToUI("ChangePathStationUI");
             }
-        }
-
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
 
     }
 
-    private void GetPathList()
-    {
-        try
-        {
+    private void GetPathList() {
+        try {
             if (isInited) {
                 imgPathList = mynpu.GetImgPaths(mapname);
                 SendMessageToUI("ChangePathUI");
             }
-        }
-
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
     }
 
-    private void GetVirtualWallList()
-    {
-        try
-        {
-            if (isNavi)
-            {
+    private void GetVirtualWallList() {
+        try {
+            if (isNavi) {
                 imgVirtualWallList = mynpu.GetImgVirtualWalls(mapname);
                 SendMessageToUI("ChangeVirtualWallUI");
             }
-        }
-        catch(NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
     }
 
-    private void SaveVirtualWall()
-    {
-        if(mynpu.isInited)
-        {
-            if(!isSettingVirtualWall)
-            {
-                isSettingVirtualWall=true;
-                pathPoseNum =0;
-                setImgposeU =0;
-                setImgposeV =0;
-                setImgposeTheta =0;
-                setImgPoseU_float=0;
-                setImgPoseV_float=0;
-                Toast toast = Toast.makeText(getApplicationContext(),"请在地图上选点,长按2秒可取消设置！", Toast.LENGTH_LONG);
+    private void SaveVirtualWall() {
+        if (mynpu.isInited) {
+            if (!isSettingVirtualWall) {
+                isSettingVirtualWall = true;
+                pathPoseNum = 0;
+                setImgposeU = 0;
+                setImgposeV = 0;
+                setImgposeTheta = 0;
+                setImgPoseU_float = 0;
+                setImgPoseV_float = 0;
+                Toast toast = Toast.makeText(getApplicationContext(), "请在地图上选点,长按2秒可取消设置！", Toast.LENGTH_LONG);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
                 strSaveVirtualWall = "保存";
-            }
-
-            else
-            {
-                isSettingVirtualWall=false;
+            } else {
+                isSettingVirtualWall = false;
                 strSaveVirtualWall = "添加虚拟墙";
-                if(pathPoseNum==0)
+                if (pathPoseNum == 0)
                     return;
                 final EditText et_pathnamex = new EditText(WizRoboNpu.this);
                 final AlertDialog dialog = new AlertDialog.Builder(WizRoboNpu.this)
@@ -4251,7 +4233,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                 dialog.dismiss();
                             }
                         })
-                        .setPositiveButton("确定",null)
+                        .setPositiveButton("确定", null)
                         .setCancelable(true)
                         .create();
                 dialog.show();
@@ -4259,84 +4241,78 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
-                 @Override
-                 public void onClick(View v) {
-                     try{
+                                                                                     @Override
+                                                                                     public void onClick(View v) {
+                                                                                         try {
 
-                     String name = et_pathnamex.getText().toString();
-                     dialog.dismiss();
-                     listVirtualWallId.clear();
+                                                                                             String name = et_pathnamex.getText().toString();
+                                                                                             dialog.dismiss();
+                                                                                             listVirtualWallId.clear();
 
-                     ImgVirtualWall[] newImgVirtualWallList = mynpu.GetImgVirtualWalls(mapname);
-                     List<ImgVirtualWall> imgVirtualWalls = new ArrayList<ImgVirtualWall>(0);
+                                                                                             ImgVirtualWall[] newImgVirtualWallList = mynpu.GetImgVirtualWalls(mapname);
+                                                                                             List<ImgVirtualWall> imgVirtualWalls = new ArrayList<ImgVirtualWall>(0);
 
-                     if (newImgVirtualWallList == null) {
-                     } else {
-                         for (int i = 0; i < newImgVirtualWallList.length; i++) {
-                             imgVirtualWalls.add(newImgVirtualWallList[i]);
-                         }
-                     }
-                     VirtualWallInfo newVirtualWallInfo = new VirtualWallInfo();
-                     ImgPoint[] newimgpoint = new ImgPoint[pathPoseNum];
-                     ImgVirtualWall newVirtualWall = new ImgVirtualWall();
-                     newVirtualWallInfo.map_id = mapname;
-                     newVirtualWallInfo.id = name;
-                     newVirtualWallInfo.length = 0;
-                     newVirtualWallInfo.closed = false;
-                     for (int i = 0; i < pathPoseNum; i++) {
-                         newimgpoint[i] = imgPathPoint[i];
-                     }
-                     newVirtualWall.info = newVirtualWallInfo;
-                     newVirtualWall.points = newimgpoint;
-                     imgVirtualWalls.add(newVirtualWall);
+                                                                                             if (newImgVirtualWallList == null) {
+                                                                                             } else {
+                                                                                                 for (int i = 0; i < newImgVirtualWallList.length; i++) {
+                                                                                                     imgVirtualWalls.add(newImgVirtualWallList[i]);
+                                                                                                 }
+                                                                                             }
+                                                                                             VirtualWallInfo newVirtualWallInfo = new VirtualWallInfo();
+                                                                                             ImgPoint[] newimgpoint = new ImgPoint[pathPoseNum];
+                                                                                             ImgVirtualWall newVirtualWall = new ImgVirtualWall();
+                                                                                             newVirtualWallInfo.map_id = mapname;
+                                                                                             newVirtualWallInfo.id = name;
+                                                                                             newVirtualWallInfo.length = 0;
+                                                                                             newVirtualWallInfo.closed = false;
+                                                                                             for (int i = 0; i < pathPoseNum; i++) {
+                                                                                                 newimgpoint[i] = imgPathPoint[i];
+                                                                                             }
+                                                                                             newVirtualWall.info = newVirtualWallInfo;
+                                                                                             newVirtualWall.points = newimgpoint;
+                                                                                             imgVirtualWalls.add(newVirtualWall);
 
-                     ImgVirtualWall[] newImgVirtualWallList1 = new ImgVirtualWall[imgVirtualWalls.size()];
-                     for (int i = 0; i < imgVirtualWalls.size(); i++) {
-                         newImgVirtualWallList1[i] = imgVirtualWalls.get(i);
-                     }
-                     mynpu.SetImgVirtualWalls(mapname, newImgVirtualWallList1);
+                                                                                             ImgVirtualWall[] newImgVirtualWallList1 = new ImgVirtualWall[imgVirtualWalls.size()];
+                                                                                             for (int i = 0; i < imgVirtualWalls.size(); i++) {
+                                                                                                 newImgVirtualWallList1[i] = imgVirtualWalls.get(i);
+                                                                                             }
+                                                                                             mynpu.SetImgVirtualWalls(mapname, newImgVirtualWallList1);
 
-                     for (int i = 0; i < newImgVirtualWallList1.length; i++) {
-                         listVirtualWallId.add(newImgVirtualWallList1[i].info.id);
-                     }
-                     imgVirtualWallList = newImgVirtualWallList1;
-                     adapterVirtualWallList.notifyDataSetChanged();
-                     pathPoseNum = 0;
+                                                                                             for (int i = 0; i < newImgVirtualWallList1.length; i++) {
+                                                                                                 listVirtualWallId.add(newImgVirtualWallList1[i].info.id);
+                                                                                             }
+                                                                                             imgVirtualWallList = newImgVirtualWallList1;
+                                                                                             adapterVirtualWallList.notifyDataSetChanged();
+                                                                                             pathPoseNum = 0;
 
-                     Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
-                     toast.setGravity(Gravity.CENTER, 0, 0);
-                     toast.show();
-                 }
-                     catch(NpuException e)
-                     {
-                         NpuExceptionAlert(e);
-                     }
-                 }
-                 }
+                                                                                             Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
+                                                                                             toast.setGravity(Gravity.CENTER, 0, 0);
+                                                                                             toast.show();
+                                                                                         } catch (NpuException e) {
+                                                                                             NpuExceptionAlert(e);
+                                                                                         }
+                                                                                     }
+                                                                                 }
                 );
 
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
 
-                 @Override
-                 public void onClick(View v) {
-                     pathPoseNum=0;
-                     dialog.dismiss();
-                 }
-             }
+                                                                                     @Override
+                                                                                     public void onClick(View v) {
+                                                                                         pathPoseNum = 0;
+                                                                                         dialog.dismiss();
+                                                                                     }
+                                                                                 }
                 );
             }
         }
     }
 
-    private void ChangeNaviUI()
-    {
-        if(mynpu.isInited)
-        {
-            if(!isNavi)
-            {
-                try
-                {
+    private void ChangeNaviUI() {
+        if (mynpu.isInited) {
+            if (!isNavi) {
+                try {
                     iv_background.setBackgroundResource(R.drawable.graybackground);
                     ibt_delete_map.setVisibility(View.INVISIBLE);
                     ibt_save_map.setVisibility(View.INVISIBLE);
@@ -4348,19 +4324,19 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     ibt_pause.setVisibility(View.VISIBLE);
                     ibt_cancel.setVisibility(View.VISIBLE);
                     sp_map_list.setEnabled(false);
-                    toGetImgMap=true;
+                    toGetImgMap = true;
                     toCoveragePathPlanning = false;
                     isNavi = true;
-                    strNaviTrack ="停止导航";
+                    strNaviTrack = "停止导航";
                     adapter_function.getChildView(0, 0, true, track_navi_view, track_navi_parent);
                     Map<String, List<String>> itemData1 = ExpandableListData.getData("Operate");
                     List<String> title1 = new ArrayList<String>(itemData1.keySet());
-                    adapter_operate = new ExpandableListAdapter(title1, itemData1,"Operate", this);
+                    adapter_operate = new ExpandableListAdapter(title1, itemData1, "Operate", this);
                     elv_operate.setAdapter(adapter_operate);
-                    strSetGoalPose ="设置目标点";
+                    strSetGoalPose = "设置目标点";
                     Map<String, List<String>> itemData2 = ExpandableListData.getData("Setting");
                     List<String> title2 = new ArrayList<String>(itemData2.keySet());
-                    adapter_setting = new ExpandableListAdapter(title2, itemData2,"Setting", this);
+                    adapter_setting = new ExpandableListAdapter(title2, itemData2, "Setting", this);
                     elv_setting.setAdapter(adapter_setting);
                     sv_control.setVisibility(View.VISIBLE);
                     listPathStationId.clear();
@@ -4368,13 +4344,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     SetInitPoseAlert();
                     elv_setting.expandGroup(0);
                     elv_function.collapseGroup(0);
+                } catch (Exception e) {
+                    ExceptionAlert(e);
                 }
-
-                catch(Exception e)
-                {ExceptionAlert(e);}
-            }
-            else
-            {
+            } else {
                 cb_station_display.setVisibility(View.INVISIBLE);
                 cb_lidar_display.setVisibility(View.INVISIBLE);
                 cb_path_display.setVisibility(View.INVISIBLE);
@@ -4382,7 +4355,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 ibt_pause.setVisibility(View.INVISIBLE);
                 ibt_cancel.setVisibility(View.INVISIBLE);
                 isNavi = false;
-                strNaviTrack ="开始导航";
+                strNaviTrack = "开始导航";
                 adapter_function.getChildView(0, 0, true, track_navi_view, track_navi_parent);
                 sp_map_list.setEnabled(true);
                 sv_control.setVisibility(View.INVISIBLE);
@@ -4390,13 +4363,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
-    private void ChangeSlamUI()
-    {
-        if(mynpu.isInited)
-        {
+    private void ChangeSlamUI() {
+        if (mynpu.isInited) {
 
-            if(!isSlam)
-            {
+            if (!isSlam) {
                 isSettingCoveragePath = false;
                 iv_background.setBackgroundResource(R.drawable.graybackground);
                 sp_map_list.setEnabled(false);
@@ -4405,13 +4375,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
                 cb_cruise_control.setVisibility(View.VISIBLE);
                 isSlam = true;
-                strSlam ="停止建图";
+                strSlam = "停止建图";
                 adapter_function.getChildView(0, 1, true, slam_view, slam_parent);
-                toGetImgMap=true;
-            }
-
-            else
-            {
+                toGetImgMap = true;
+            } else {
 
                 final EditText et_mapnamex = new EditText(WizRoboNpu.this);
                 final AlertDialog dialog = new AlertDialog.Builder(WizRoboNpu.this)
@@ -4426,7 +4393,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                 dialog.dismiss();
                             }
                         })
-                        .setPositiveButton("确定",null)
+                        .setPositiveButton("确定", null)
                         .setCancelable(true)
                         .create();
                 dialog.show();
@@ -4434,60 +4401,54 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
-                 @Override
-                 public void onClick(View v) {
-                     try {
-                         boolean a;
-                         String name = et_mapnamex.getText().toString();
-                         if (name == null || name.length() <= 0) {
-                             mynpu.StopSlam("");
-                         } else {
-                             mynpu.StopSlam(name);
-                             Toast toast = Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT);
-                             toast.setGravity(Gravity.CENTER, 0, 0);
-                             toast.show();
-                         }
-                         mapInfosChanged=true;
-                         Delay(1000);
-                         isSlam = false;
-                         strSlam = "开始建图";
-                         toGetImgMap = false;
-                         cb_cruise_control.setVisibility(View.INVISIBLE);
-                         adapter_function.getChildView(0, 1, true, slam_view, slam_parent);
-                         sp_map_list.setEnabled(true);
+                                                                                     @Override
+                                                                                     public void onClick(View v) {
+                                                                                         try {
+                                                                                             boolean a;
+                                                                                             String name = et_mapnamex.getText().toString();
+                                                                                             if (name == null || name.length() <= 0) {
+                                                                                                 mynpu.StopSlam("");
+                                                                                             } else {
+                                                                                                 mynpu.StopSlam(name);
+                                                                                                 Toast toast = Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT);
+                                                                                                 toast.setGravity(Gravity.CENTER, 0, 0);
+                                                                                                 toast.show();
+                                                                                             }
+                                                                                             mapInfosChanged = true;
+                                                                                             Delay(1000);
+                                                                                             isSlam = false;
+                                                                                             strSlam = "开始建图";
+                                                                                             toGetImgMap = false;
+                                                                                             cb_cruise_control.setVisibility(View.INVISIBLE);
+                                                                                             adapter_function.getChildView(0, 1, true, slam_view, slam_parent);
+                                                                                             sp_map_list.setEnabled(true);
 
-                         dialog.dismiss();
+                                                                                             dialog.dismiss();
 
-                     }
-                     catch(NpuException e)
-                     {
-                         NpuExceptionAlert(e);
-                     }
+                                                                                         } catch (NpuException e) {
+                                                                                             NpuExceptionAlert(e);
+                                                                                         }
 
-                 }
-             }
+                                                                                     }
+                                                                                 }
                 );
 
             }
         }
     }
 
-    private void ChangePathStationUI()
-    {
+    private void ChangePathStationUI() {
 
-        if(isInited&&isNavi)
-        {
+        if (isInited && isNavi) {
             listPathStationId.clear();
 
-            if(imgStationList==null||imgStationList.length==0)
-            {
+            if (imgStationList == null || imgStationList.length == 0) {
                 listPathStationId.add("站点列表:空");
                 adapterPathStationList.notifyDataSetChanged();
                 return;
             }
 
-            for(int i=0;i<imgStationList.length;i++)
-            {
+            for (int i = 0; i < imgStationList.length; i++) {
                 listPathStationId.add(imgStationList[i].info.id);
             }
 
@@ -4495,28 +4456,23 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
-    private void ChangePathUI()
-    {
-        if(isInited)
-        {
+    private void ChangePathUI() {
+        if (isInited) {
             pathListId.clear();
-            if(imgPathList==null||imgPathList.length==0)
-            {
+            if (imgPathList == null || imgPathList.length == 0) {
                 pathListId.add("路径列表:空");
                 adapterPathList.notifyDataSetChanged();
                 return;
             }
 
-            for(int i=0;i<imgPathList.length;i++)
-            {
+            for (int i = 0; i < imgPathList.length; i++) {
                 pathListId.add(imgPathList[i].info.id);
             }
             adapterPathList.notifyDataSetChanged();
         }
     }
 
-    private void ChangeTaskUI()
-    {
+    private void ChangeTaskUI() {
         taskListId.clear();
 
         if (taskList == null || taskList.length == 0) {
@@ -4533,88 +4489,73 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     }
 
     @SuppressLint("SetTextI18n")
-    private void ChangeWifiUI()
-    {
+    private void ChangeWifiUI() {
         tv_wifi_strength.setTextColor(Color.rgb(255, 116, 0));
         tv_wifi_strength.setText("   信号" + Integer.toString(wifiStrength) + " " + "良好");
         Toast toast = Toast.makeText(getApplicationContext(), "Wifi信号弱！", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, 0);
 
-        if (wifiStrength < -69)
-        {
+        if (wifiStrength < -69) {
             toStopGetImgMap = true;
             tv_wifi_strength.setTextColor(Color.rgb(207, 42, 48));
             tv_wifi_strength.setText("   信号" + Integer.toString(wifiStrength) + " " + "弱");
-        }
-
-        else
-        {
-            if (isSlam == true && toStopGetImgMap == true)
-            {
+        } else {
+            if (isSlam == true && toStopGetImgMap == true) {
                 toStopGetImgMap = false;
                 toast.cancel();
             }
         }
 
-        if(!wifiIsConnected)
-        {
+        if (!wifiIsConnected) {
             tv_wifi_strength.setTextColor(Color.rgb(207, 42, 48));
             tv_wifi_strength.setText(" wifi未连接！");
         }
     }
 
-    public void SendMessageToUI(String a)
-    {
+    public void SendMessageToUI(String a) {
         Message msg = new Message();
         Bundle data = new Bundle();
-        data.putString("value",a);
+        data.putString("value", a);
         msg.setData(data);
         updateUiHandler.sendMessage(msg);
-        msg=null;
-        data=null;
+        msg = null;
+        data = null;
     }
 
-    private void SelectMapNotice()
-    {
-        Toast toast = Toast.makeText(getApplicationContext(),"请先选择地图！", Toast.LENGTH_LONG);
+    private void SelectMapNotice() {
+        Toast toast = Toast.makeText(getApplicationContext(), "请先选择地图！", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
     }
 
-    private void ConnectSuccess()
-    {
+    private void ConnectSuccess() {
         tv_ip.setText(strServerIP);
         Toast toast = Toast.makeText(getApplicationContext(), "连接成功！", Toast.LENGTH_LONG);
         toast.show();
     }
 
-    private void ChangeVirtualWallUI()
-    {
+    private void ChangeVirtualWallUI() {
         listVirtualWallId.clear();
 
-        if(imgVirtualWallList==null||imgVirtualWallList.length==0)
-        {
+        if (imgVirtualWallList == null || imgVirtualWallList.length == 0) {
             listVirtualWallId.add("虚拟墙:空");
             adapterVirtualWallList.notifyDataSetChanged();
             return;
         }
 
-        for(int i=0;i<imgVirtualWallList.length;i++)
-        {
+        for (int i = 0; i < imgVirtualWallList.length; i++) {
             listVirtualWallId.add(imgVirtualWallList[i].info.id);
         }
         adapterVirtualWallList.notifyDataSetChanged();
     }
 
-    private void SettingCancel()
-    {
+    private void SettingCancel() {
         Toast toast = Toast.makeText(getApplicationContext(), "设置已取消！", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
     }
 
-    private void SettingNotice()
-    {
+    private void SettingNotice() {
         Toast toast = Toast.makeText(getApplicationContext(), "可通过摇杆或滑动改变方向，长按2秒取消设置！", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
@@ -4624,8 +4565,8 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
             Uri uri = data.getData();
-            if ("file".equalsIgnoreCase(uri.getScheme())){//使用第三方应用打开
-                Toast.makeText(this,uri.getPath(),Toast.LENGTH_SHORT).show();
+            if ("file".equalsIgnoreCase(uri.getScheme())) {//使用第三方应用打开
+                Toast.makeText(this, uri.getPath(), Toast.LENGTH_SHORT).show();
                 return;
             }
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
@@ -4638,9 +4579,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
     public String getRealPathFromURI(Uri contentUri) {
         String res = null;
-        String[] proj = { MediaStore.Images.Media.DATA };
+        String[] proj = {MediaStore.Images.Media.DATA};
         Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if(null!=cursor&&cursor.moveToFirst()){;
+        if (null != cursor && cursor.moveToFirst()) {
+            ;
             int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             res = cursor.getString(column_index);
             cursor.close();
@@ -4764,24 +4706,18 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
 
-    private  void CheckSensorStatus()
-    {
-      if(isInited)
-      {
-          if (!isNavi || !isSlam)
-          {
-              try
-              {
-                  createProgressDialog();
-                  mSensorStatus = mynpu.GetSensorStatus();
-                  isGettingSensorstatus = false;
-                  SendMessageToUI("CheckSensorStatus");
-              }
-
-              catch (Exception e)
-              {}
-          }
-      }
+    private void CheckSensorStatus() {
+        if (isInited) {
+            if (!isNavi || !isSlam) {
+                try {
+                    createProgressDialog();
+                    mSensorStatus = mynpu.GetSensorStatus();
+                    isGettingSensorstatus = false;
+                    SendMessageToUI("CheckSensorStatus");
+                } catch (Exception e) {
+                }
+            }
+        }
     }
 
     private void DisPlaySensorStatus() {
@@ -4809,26 +4745,19 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             }
         }
 
-        if (statuslist.size() == 0)
-        {
+        if (statuslist.size() == 0) {
             Toast.makeText(WizRoboNpu.this, "硬件状态正常！", Toast.LENGTH_SHORT).show();
-            toGetSensorData=true;
-        }
+            toGetSensorData = true;
+        } else {
 
-        else
-        {
-
-            final String[] statusdata=new String[statuslist.size()];
-            for(int i=0;i<statuslist.size();i++)
-            {
-              statusdata[i]=statuslist.get(i);
+            final String[] statusdata = new String[statuslist.size()];
+            for (int i = 0; i < statuslist.size(); i++) {
+                statusdata[i] = statuslist.get(i);
             }
             //    设置一个下拉的列表选择项
-            builder.setItems(statusdata, new DialogInterface.OnClickListener()
-            {
+            builder.setItems(statusdata, new DialogInterface.OnClickListener() {
                 @Override
-                public void onClick(DialogInterface dialog, int which)
-                {
+                public void onClick(DialogInterface dialog, int which) {
                     //Toast.makeText(WizRoboNpu.this, "选择的城市为：" + cities[which], Toast.LENGTH_SHORT).show();
                 }
             });
@@ -4848,53 +4777,45 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
         }
     }
 
-    private void ChangeProgressBar()
-    {
+    private void ChangeProgressBar() {
         pg_my_progressbar.setProgress(progress);
         pg_my_progressbar.setVisibility(View.VISIBLE);
 
-        if(progress==0)
-        {
+        if (progress == 0) {
             Toast.makeText(WizRoboNpu.this, "开始传输文件...", Toast.LENGTH_SHORT).show();
         }
-        if(progress==100)
-        {
+        if (progress == 100) {
             pg_my_progressbar.setVisibility(View.INVISIBLE);
             Toast.makeText(WizRoboNpu.this, "传输成功！若为导出文件，存于根目录中，名称为：Npu导出文件...", Toast.LENGTH_LONG).show();
         }
     }
 
-    public  void GetSensorStatus()
-    {
-        if(isInited&&!isGettingSensorstatus)
+    public void GetSensorStatus() {
+        if (isInited && !isGettingSensorstatus)
             CheckSensorStatus();
     }
 
-    private void createProgressDialog(){
-        mContext=this;
-        mProgressDialog=new ProgressDialog(mContext);
+    private void createProgressDialog() {
+        mContext = this;
+        mProgressDialog = new ProgressDialog(mContext);
         mProgressDialog.setMessage("硬件自检中，请稍候...");
         mProgressDialog.setCanceledOnTouchOutside(false);
         mProgressDialog.show();
     }
 
 
-    private void SetMapInfoSucceed()
-    {
-        mapInfosChanged=true;
+    private void SetMapInfoSucceed() {
+        mapInfosChanged = true;
         Toast toast = Toast.makeText(getApplicationContext(), "地图删除成功！", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
     }
 
-    private void GetMapInfos()
-    {
-        try
-        {
+    private void GetMapInfos() {
+        try {
             if (mapInfoList == null || mapInfoList.length == 0)
                 return;
-            for (int i = 0; i < mapInfoList.length; i++)
-            {
+            for (int i = 0; i < mapInfoList.length; i++) {
                 listMapId.add(mapInfoList[i].id);
             }
             iv_background.setBackgroundResource(R.drawable.graybackground);
@@ -4903,26 +4824,22 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             Display();
             adapterMapList.notifyDataSetChanged();
             ibt_delete_map.setVisibility(View.VISIBLE);
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             ExceptionAlert(e);
         }
     }
 
-    private void GetServerVersion()
-    {
+    private void GetServerVersion() {
         tv_npu_version.setText(str_npu_version);
     }
 
 
-    private void DisplayLidar()
-    {
+    private void DisplayLidar() {
         iv_background.setBackgroundResource(R.drawable.graybackground);
         int w = 1000, h = 1000;
         Config conf = Config.ARGB_8888; // see other conf types
         Bitmap bmp = Bitmap.createBitmap(w, h, conf); // this creates a MUTABLE bitmap
-         canvas = new Canvas(bmp);
+        canvas = new Canvas(bmp);
         if (lidarScanData == null)
             return;
         Point3D[] points;
@@ -4945,8 +4862,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
     }
 
 
-    private void GetTaskList()
-    {
+    private void GetTaskList() {
         try {
             if (WizRoboNpu.isInited) {
 
@@ -4967,19 +4883,16 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 adapterTaskList.notifyDataSetChanged();
 
             }
-        }
-        catch (NpuException e)
-        {
+        } catch (NpuException e) {
             NpuExceptionAlert(e);
         }
 
     }
 
-    private void ExcuteTask()
-    {
+    private void ExcuteTask() {
 
         if (mynpu.isInited) {
-            if(taskList == null || taskList.length<=0)
+            if (taskList == null || taskList.length <= 0)
                 return;
             final AlertDialog dialog = new AlertDialog.Builder(WizRoboNpu.this)
                     .setTitle("提示")
@@ -5000,44 +4913,42 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
             //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
-                 @Override
-                 public void onClick(View v) {
+                                                                                 @Override
+                                                                                 public void onClick(View v) {
 
-                     Task[] newtasklist=new Task[1];
-                     newtasklist[0]=taskList[sp_task_list.getSelectedItemPosition()];
-                     try {
-                         mynpu.ExecuteTask(newtasklist);
-                         dialog.dismiss();
-                     }
-                     catch (NpuException e)
-                     {
-                         NpuExceptionAlert(e);
-                     }
+                                                                                     Task[] newtasklist = new Task[1];
+                                                                                     newtasklist[0] = taskList[sp_task_list.getSelectedItemPosition()];
+                                                                                     try {
+                                                                                         mynpu.ExecuteTask(newtasklist);
+                                                                                         dialog.dismiss();
+                                                                                     } catch (NpuException e) {
+                                                                                         NpuExceptionAlert(e);
+                                                                                     }
 
 
-                 }
-             }
+                                                                                 }
+                                                                             }
             );
 
             //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
 
                                                                                  @Override
-                                                                                 public void onClick(View v) {dialog.dismiss();}
+                                                                                 public void onClick(View v) {
+                                                                                     dialog.dismiss();
+                                                                                 }
                                                                              }
             );
         }
     }
 
-    private void CollapseGroup(ExpandableListView view)
-    {
+    private void CollapseGroup(ExpandableListView view) {
         for (int i = 0, count = view.getExpandableListAdapter().getGroupCount(); i < count; i++) {
-                view.collapseGroup(i);
+            view.collapseGroup(i);
         }
     }
 
-    private void AddCoverageArea()
-    {
+    private void AddCoverageArea() {
         if (mynpu.isInited) {
             if (!isSettingPathpose && !isSettingStationPath) {
                 isSettingPathpose = true;
@@ -5045,7 +4956,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 pathPoseNum = 0;
                 setImgposeU = 0;
                 setImgposeV = 0;
-                redarrowYaw=0;
+                redarrowYaw = 0;
                 setImgposeTheta = 0;
                 setImgPoseU_float = 0;
                 setImgPoseV_float = 0;
@@ -5081,80 +4992,77 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                         .setOnClickListener(new OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                try {
-                                    boolean a;
-                                    String name = et_pathnamex.getText().toString();
-                                    if (name == null || name.length() <= 0) {
-                                    } else {
-                                        dialog.dismiss();
-                                    }
-                                    pathListId.clear();
-                                    ImgPath[] newImgPathList = imgPathList;
-                                    List<ImgPath> imgPaths = new ArrayList<ImgPath>(0);
-                                    if (newImgPathList == null) {
-                                    } else {
-                                        for (int i = 0; i < newImgPathList.length; i++) {
-                                            imgPaths.add(newImgPathList[i]);
-                                        }
-                                    }
-                                    PathInfo newpathinfo = new PathInfo();
-                                    ImgPose[] newimgpose = new ImgPose[pathPoseNum];
-                                    ImgPath newpath = new ImgPath();
-                                    newpathinfo.map_id = mapname;
-                                    newpathinfo.id = name;
-                                    newpathinfo.length = 0;
-                                    newpathinfo.pose_num = pathPoseNum;
-                                     for (int i = 0; i < pathPoseNum; i++) {
-                                         newimgpose[i] = imgPathPose[i];
-                                     }
-                                    newpath.info = newpathinfo;
-                                    newpath.poses = newimgpose;
-                                    imgPaths.add(newpath);
-                                    ImgPath[] newImgPathList1 = new ImgPath[imgPaths.size()];
-                                    for (int i = 0; i < imgPaths.size(); i++) {
-                                        newImgPathList1[i] = imgPaths.get(i);
-                                    }
-                                    mynpu.SetImgPaths(mapname, newImgPathList1);
-                                    for (int i = 0; i < newImgPathList1.length; i++) {
-                                        pathListId.add(newImgPathList1[i].info.id);
-                                    }
-                                    imgPathList = newImgPathList1;
-                                    adapterPathList.notifyDataSetChanged();
-                                    //GetPathList();
-                                    pathPoseNum = 0;
+                                                @Override
+                                                public void onClick(View v) {
+                                                    try {
+                                                        boolean a;
+                                                        String name = et_pathnamex.getText().toString();
+                                                        if (name == null || name.length() <= 0) {
+                                                        } else {
+                                                            dialog.dismiss();
+                                                        }
+                                                        pathListId.clear();
+                                                        ImgPath[] newImgPathList = imgPathList;
+                                                        List<ImgPath> imgPaths = new ArrayList<ImgPath>(0);
+                                                        if (newImgPathList == null) {
+                                                        } else {
+                                                            for (int i = 0; i < newImgPathList.length; i++) {
+                                                                imgPaths.add(newImgPathList[i]);
+                                                            }
+                                                        }
+                                                        PathInfo newpathinfo = new PathInfo();
+                                                        ImgPose[] newimgpose = new ImgPose[pathPoseNum];
+                                                        ImgPath newpath = new ImgPath();
+                                                        newpathinfo.map_id = mapname;
+                                                        newpathinfo.id = name;
+                                                        newpathinfo.length = 0;
+                                                        newpathinfo.pose_num = pathPoseNum;
+                                                        for (int i = 0; i < pathPoseNum; i++) {
+                                                            newimgpose[i] = imgPathPose[i];
+                                                        }
+                                                        newpath.info = newpathinfo;
+                                                        newpath.poses = newimgpose;
+                                                        imgPaths.add(newpath);
+                                                        ImgPath[] newImgPathList1 = new ImgPath[imgPaths.size()];
+                                                        for (int i = 0; i < imgPaths.size(); i++) {
+                                                            newImgPathList1[i] = imgPaths.get(i);
+                                                        }
+                                                        mynpu.SetImgPaths(mapname, newImgPathList1);
+                                                        for (int i = 0; i < newImgPathList1.length; i++) {
+                                                            pathListId.add(newImgPathList1[i].info.id);
+                                                        }
+                                                        imgPathList = newImgPathList1;
+                                                        adapterPathList.notifyDataSetChanged();
+                                                        //GetPathList();
+                                                        pathPoseNum = 0;
 
-                                     Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
-                                    toast.setGravity(Gravity.CENTER, 0, 0);
-                                    toast.show();
-                                }
-                                catch(NpuException e)
-                                {
-                                    NpuExceptionAlert(e);
-                                    return;
-                                }
-                            }
-                        }
-                );
+                                                        Toast toast = Toast.makeText(getApplicationContext(), "添加成功！", Toast.LENGTH_LONG);
+                                                        toast.setGravity(Gravity.CENTER, 0, 0);
+                                                        toast.show();
+                                                    } catch (NpuException e) {
+                                                        NpuExceptionAlert(e);
+                                                        return;
+                                                    }
+                                                }
+                                            }
+                        );
 
                 //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        pathPoseNum = 0;
-                        dialog.dismiss();
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                        .setOnClickListener(new OnClickListener() {
+                                                @Override
+                                                public void onClick(View v) {
+                                                    pathPoseNum = 0;
+                                                    dialog.dismiss();
 
-                    }
-                }
-                );
+                                                }
+                                            }
+                        );
             }
         }
     }
 
-    private void DetectUnfinishedTask()
-    {
-
+    private void DetectUnfinishedTask() {
         final EditText et_pathnamex = new EditText(WizRoboNpu.this);
         final AlertDialog dialog = new AlertDialog.Builder(WizRoboNpu.this)
                 .setTitle("检测到未完成任务")
@@ -5167,7 +5075,7 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                     }
                 })
                 .setPositiveButton("确定", null)
-                .setNeutralButton("重设初始位置",null)
+                .setNeutralButton("重设初始位置", null)
                 .setCancelable(true)
                 .create();
         dialog.show();
@@ -5177,13 +5085,10 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
 
                                                                              @Override
                                                                              public void onClick(View v) {
-                                                                                 try
-                                                                                 {
-                                                                                     mynpu.FollowPath(mapname,"unfinished_path");
+                                                                                 try {
+                                                                                     mynpu.FollowPath(mapname, "unfinished_path");
                                                                                      dialog.dismiss();
-                                                                                 }
-                                                                                 catch(NpuException e)
-                                                                                 {
+                                                                                 } catch (NpuException e) {
                                                                                      NpuExceptionAlert(e);
                                                                                  }
 
@@ -5202,19 +5107,144 @@ public  class WizRoboNpu extends AppCompatActivity implements JoystickView.Joyst
                                                                          }
         );
 
-                //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
-                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new OnClickListener() {
+        //为了避免点击 positive 按钮后直接关闭 dialog,把点击事件拿出来设置
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new OnClickListener() {
 
-                    @Override
-                    public void onClick(View v) {
-                        ibt_pause.setImageResource(R.drawable.continue3);
-                        pause = true;
-                        toExcuteUnfinishedTask = true;
-                        dialog.dismiss();
-                    }
-                }
+                                                                            @Override
+                                                                            public void onClick(View v) {
+                                                                                ibt_pause.setImageResource(R.drawable.continue3);
+                                                                                pause = true;
+                                                                                toExcuteUnfinishedTask = true;
+                                                                                dialog.dismiss();
+                                                                            }
+                                                                        }
         );
     }
+
+
+    private void dingDianPlay() {
+        if (imgStationList != null) {
+            if (isDingdianPlaying == false) {
+                isDingdianPlaying = true;
+                listCount = imgStationList.length;
+                dingDianlistItem = 0;
+                if (dingDianPlayThred != null && dingDianPlayThred.isAlive()) {
+                    dingDianPlayThred.interrupt();
+                }
+
+                dingDianPlayThred = new Thread(dingDianPlayRunnable);
+                dingDianPlayThred.start();
+            }
+        }
+    }
+
+    private Runnable dingDianplayRunnable2 = new Runnable() {
+        @Override
+        public void run() {
+            if (dingDianlistItem < listCount) {
+
+            } else {
+                dingDianlistItem = 0;
+            }
+            isNextPlay = false;
+        }
+    };
+
+    private void dingDianGo(int itemCount) {
+//        try {
+//            mynpu.GotoStation(mapname, imgStationList[itemCount].info.id.toString());
+//            Log.e("play", "dingDianlistItem =" + dingDianlistItem + "listName =" + imgStationList[itemCount].info.id.toString());
+//
+//        } catch (NpuException e) {
+//            e.printStackTrace();
+//        }
+
+        Log.e("play", "goto " + itemCount + " post");
+        dingDianlistItem++;
+        listPicPaths = fileUtil.getPicturePathList(PICPATHS + "/" + itemCount);
+        Log.e("play", "fileUtil path:" + PICPATHS + "/" + itemCount);
+
+    }
+
+    private Runnable dingDianPlayRunnable = new Runnable() {
+        @Override
+        public void run() {
+            while (isDingdianPlaying == true) {
+                if (isNextPlay == true) {
+//                        Log.e("play", "mapName =" + mapname + "\ndingDianlistItem =" + dingDianlistItem + "\n listName =" + imgStationList[dingDianlistItem].info.id.toString());
+                   Log.e("play","dingDianPlayRunnable start");
+                    dingDianGo(dingDianlistItem);
+                    isNextPlay = false;
+                    try {
+                        Thread.currentThread().sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+            }
+
+        }
+    };
+
+
+    Handler dingDianPlayHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Bundle data = msg.getData();
+            String val = data.getString("value");
+
+            switch (val) {
+                case "":
+                    break;
+                default:
+                    Toast.makeText(WizRoboNpu.this, val, Toast.LENGTH_SHORT).show();
+                    break;
+            }
+
+            switch (msg.what) {
+                case 1:
+                    btn2Dingdian.setText(val);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    };
+
+
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE);
+        }
+    }
+
+    private Bitmap getDiskBitmap(String pathString)
+    {
+        Bitmap bitmap = null;
+        try
+        {
+            File file = new File(pathString);
+            if(file.exists())
+            {
+                bitmap = BitmapFactory.decodeFile(pathString);
+            }
+        } catch (Exception e)
+        {
+            // TODO: handle exception
+        }
+        return bitmap;
+    }
+
+
 }
 
 

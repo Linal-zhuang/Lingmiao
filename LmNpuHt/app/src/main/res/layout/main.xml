@@ -1,23 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
-	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/main"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent"
-	android:background="@color/gray2"
-	android:orientation="horizontal">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/gray2"
+    android:orientation="horizontal">
 
-	<LinearLayout
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:orientation="vertical"
-		android:weightSum="1">
+    <LinearLayout
+        android:id="@+id/linearlayoutRollPageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
 
-		<RelativeLayout
-			android:layout_width="match_parent"
-			android:layout_height="match_parent">
-			<!--
+        <com.jude.rollviewpager.RollPagerView
+            android:id="@+id/rpvPicturePlay"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="8" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnPlayBack"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="back" />
+
+            <Button
+                android:id="@+id/btnPlayStop"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="stop" />
+
+            <Button
+                android:id="@+id/btnPlayNext"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="next" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:weightSum="1">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <!--
                 <ImageView
                     android:id="@+id/arrow"
                     android:layout_width="wrap_content"
@@ -29,458 +71,472 @@
                     android:contentDescription="@string/app_name" />
                 -->
 
-			<ImageView
-				android:id="@+id/iv_background"
-				android:layout_width="match_parent"
-				android:layout_height="match_parent"
-				android:layout_alignParentLeft="false"
-				android:layout_alignParentStart="false"
-				android:layout_alignParentTop="true"
-				android:background="@drawable/logo4"
-				android:clickable="true"
-				android:contentDescription="@string/app_name"
-				android:scaleType="matrix" />
+            <ImageView
+                android:id="@+id/iv_background"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="false"
+                android:layout_alignParentStart="false"
+                android:layout_alignParentTop="true"
+                android:background="@drawable/logo4"
+                android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="matrix" />
 
-			<TextView
-				android:id="@+id/tv_act_pose"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignParentLeft="true"
-				android:layout_alignParentStart="true"
-				android:layout_below="@+id/tv_act_motor_spd"
-				android:text="当前位置:0.0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_act_pose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/tv_act_motor_spd"
+                android:text="当前位置:0.0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_robot_status"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tv_act_motor_spd"
-				android:layout_marginLeft="40dp"
-				android:layout_toRightOf="@+id/tv_act_pose"
-				android:text="NPU状态:未连接"
-				android:textColor="@android:color/holo_red_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_robot_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_act_motor_spd"
+                android:layout_marginLeft="40dp"
+                android:layout_toRightOf="@+id/tv_act_pose"
+                android:text="NPU状态:未连接"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_mapinfo"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="地图信息:0,0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_mapinfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="地图信息:0,0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_cmd_vel"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tv_mapinfo"
-				android:text="指令速度:0,0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_cmd_vel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_mapinfo"
+                android:text="指令速度:0,0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_act_vel"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tv_cmd_vel"
-				android:text="当前速度:0,0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_act_vel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_cmd_vel"
+                android:text="当前速度:0,0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_cmd_motor_spd"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tv_mapinfo"
-				android:layout_marginLeft="40dp"
-				android:layout_toEndOf="@+id/tv_act_pose"
-				android:layout_toRightOf="@+id/tv_act_pose"
-				android:text="电机指令速度:0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_cmd_motor_spd"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_mapinfo"
+                android:layout_marginLeft="40dp"
+                android:layout_toEndOf="@+id/tv_act_pose"
+                android:layout_toRightOf="@+id/tv_act_pose"
+                android:text="电机指令速度:0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_act_motor_spd"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignLeft="@+id/tv_cmd_motor_spd"
-				android:layout_alignStart="@+id/tv_cmd_motor_spd"
-				android:layout_below="@+id/tv_cmd_motor_spd"
-				android:text="电机实际速度:0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_act_motor_spd"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/tv_cmd_motor_spd"
+                android:layout_alignStart="@+id/tv_cmd_motor_spd"
+                android:layout_below="@+id/tv_cmd_motor_spd"
+                android:text="电机实际速度:0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_ip"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_above="@+id/tv_cmd_motor_spd"
-				android:layout_alignLeft="@+id/tv_cmd_motor_spd"
-				android:layout_alignStart="@+id/tv_cmd_motor_spd"
-				android:layout_weight="0.06"
-				android:text="0.0.0.0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_ip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/tv_cmd_motor_spd"
+                android:layout_alignLeft="@+id/tv_cmd_motor_spd"
+                android:layout_alignStart="@+id/tv_cmd_motor_spd"
+                android:layout_weight="0.06"
+                android:text="0.0.0.0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<TextView
-				android:id="@+id/tv_wifi_strength"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignParentTop="false"
-				android:layout_toEndOf="@+id/tv_ip"
-				android:layout_toRightOf="@+id/tv_ip"
-				android:layout_weight="0.15"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_wifi_strength"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="false"
+                android:layout_toEndOf="@+id/tv_ip"
+                android:layout_toRightOf="@+id/tv_ip"
+                android:layout_weight="0.15"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<LinearLayout
-				android:id="@+id/linearLayout"
-				android:layout_width="250dp"
-				android:layout_height="30dp"
-				android:layout_alignParentTop="true"
-				android:layout_toLeftOf="@+id/linearLayout2"
-				android:layout_toStartOf="@+id/linearLayout2"
-				android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="250dp"
+                android:layout_height="30dp"
+                android:layout_alignParentTop="true"
+                android:layout_toLeftOf="@+id/linearLayout2"
+                android:layout_toStartOf="@+id/linearLayout2"
+                android:orientation="horizontal">
 
-				<!--<Button-->
-				<!--android:layout_width="wrap_content"-->
-				<!--android:layout_height="wrap_content"-->
-				<!--android:onClick="show"-->
-				<!--android:text="显示悬浮窗" />-->
+                <!--<Button-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:onClick="show"-->
+                <!--android:text="显示悬浮窗" />-->
 
-				<!--<Button-->
-				<!--android:layout_width="wrap_content"-->
-				<!--android:layout_height="wrap_content"-->
-				<!--android:onClick="showBig"-->
-				<!--android:text="显示二级窗口" />-->
+                <!--<Button-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:onClick="showBig"-->
+                <!--android:text="显示二级窗口" />-->
 
-				<!--<Button-->
-				<!--android:layout_width="match_parent"-->
-				<!--android:layout_height="wrap_content"-->
-				<!--android:onClick="remove"-->
-				<!--android:text="移除悬浮窗" />-->
+                <!--<Button-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:onClick="remove"-->
+                <!--android:text="移除悬浮窗" />-->
 
-				<CheckBox
-					android:id="@+id/cb_lidar_display"
-					android:layout_width="40dp"
-					android:layout_height="wrap_content"
-					android:layout_above="@+id/tv_act_motor_spd"
-					android:layout_toLeftOf="@+id/cb_path_display"
-					android:layout_toStartOf="@+id/cb_path_display"
-					android:buttonTint="@android:color/darker_gray"
-					android:checked="true"
-					android:text="雷达"
-					android:textColor="@android:color/holo_orange_dark"
-					android:textSize="8sp" />
+                <CheckBox
+                    android:id="@+id/cb_lidar_display"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_above="@+id/tv_act_motor_spd"
+                    android:layout_toLeftOf="@+id/cb_path_display"
+                    android:layout_toStartOf="@+id/cb_path_display"
+                    android:buttonTint="@android:color/darker_gray"
+                    android:checked="true"
+                    android:text="雷达"
+                    android:textColor="@android:color/holo_orange_dark"
+                    android:textSize="8sp" />
 
-				<CheckBox
-					android:id="@+id/cb_path_display"
-					android:layout_width="40dp"
-					android:layout_height="wrap_content"
-					android:layout_alignBottom="@+id/cb_lidar_display"
-					android:layout_toLeftOf="@+id/cb_station_display"
-					android:layout_toStartOf="@+id/cb_station_display"
-					android:buttonTint="@android:color/darker_gray"
-					android:checked="true"
-					android:text="路径"
-					android:textColor="@android:color/holo_orange_dark"
-					android:textSize="8sp" />
+                <CheckBox
+                    android:id="@+id/cb_path_display"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/cb_lidar_display"
+                    android:layout_toLeftOf="@+id/cb_station_display"
+                    android:layout_toStartOf="@+id/cb_station_display"
+                    android:buttonTint="@android:color/darker_gray"
+                    android:checked="true"
+                    android:text="路径"
+                    android:textColor="@android:color/holo_orange_dark"
+                    android:textSize="8sp" />
 
-				<CheckBox
-					android:id="@+id/cb_station_display"
-					android:layout_width="40dp"
-					android:layout_height="wrap_content"
-					android:layout_alignBottom="@+id/cb_path_display"
-					android:layout_alignParentEnd="true"
-					android:layout_alignParentRight="true"
-					android:buttonTint="@android:color/darker_gray"
-					android:checked="true"
-					android:text="站点"
-					android:textColor="@android:color/holo_orange_dark"
-					android:textSize="8sp" />
+                <CheckBox
+                    android:id="@+id/cb_station_display"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/cb_path_display"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:buttonTint="@android:color/darker_gray"
+                    android:checked="true"
+                    android:text="站点"
+                    android:textColor="@android:color/holo_orange_dark"
+                    android:textSize="8sp" />
 
-				<CheckBox
-					android:id="@+id/cb_cruise_control"
-					android:layout_width="40dp"
-					android:layout_height="wrap_content"
-					android:layout_above="@+id/tv_act_motor_spd"
-					android:layout_toLeftOf="@+id/cb_path_display"
-					android:layout_toStartOf="@+id/cb_path_display"
-					android:buttonTint="@android:color/darker_gray"
-					android:checked="false"
-					android:text="定速"
-					android:textColor="@android:color/holo_orange_dark"
-					android:textSize="8sp" />
+                <CheckBox
+                    android:id="@+id/cb_cruise_control"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_above="@+id/tv_act_motor_spd"
+                    android:layout_toLeftOf="@+id/cb_path_display"
+                    android:layout_toStartOf="@+id/cb_path_display"
+                    android:buttonTint="@android:color/darker_gray"
+                    android:checked="false"
+                    android:text="定速"
+                    android:textColor="@android:color/holo_orange_dark"
+                    android:textSize="8sp" />
 
-				<ImageButton
-					android:id="@+id/ibt_savemap"
-					android:layout_width="30dp"
-					android:layout_height="30dp"
-					android:layout_alignParentEnd="true"
-					android:layout_alignParentRight="true"
-					android:layout_alignParentTop="true"
-					android:layout_weight="1"
-					android:background="@android:color/transparent"
-					android:scaleType="fitCenter"
-					app:srcCompat="@android:drawable/ic_menu_save" />
+                <ImageButton
+                    android:id="@+id/ibt_savemap"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@android:drawable/ic_menu_save" />
 
-				<ImageButton
-					android:id="@+id/ibt_delete_map"
-					android:layout_width="30dp"
-					android:layout_height="30dp"
-					android:layout_alignParentEnd="true"
-					android:layout_alignParentRight="true"
-					android:layout_alignParentTop="true"
-					android:layout_weight="1"
-					android:background="@android:color/transparent"
-					android:scaleType="fitCenter"
-					app:srcCompat="@android:drawable/ic_delete" />
+                <ImageButton
+                    android:id="@+id/ibt_delete_map"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@android:drawable/ic_delete" />
 
-			</LinearLayout>
-
-
+            </LinearLayout>
 
 
-			<LinearLayout
-				android:id="@+id/linearLayout3"
-				android:layout_width="150dp"
-				android:layout_height="40dp"
-				android:layout_alignParentBottom="true"
-				android:layout_marginBottom="5dp"
-				android:layout_toStartOf="@+id/linearLayout2"
-				android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/linearLayout3"
+                android:layout_width="150dp"
+                android:layout_height="40dp"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="5dp"
+                android:layout_toStartOf="@+id/linearLayout2"
+                android:orientation="horizontal">
 
-				<ImageButton
-					android:id="@+id/ibt_cancel"
-					android:layout_width="40dp"
-					android:layout_height="40dp"
-					android:layout_alignLeft="@+id/ibt_pause"
-					android:layout_alignParentBottom="true"
-					android:layout_alignStart="@+id/ibt_pause"
-					android:background="@android:color/transparent"
-					android:scaleType="fitCenter"
-					app:srcCompat="@drawable/cancel2" />
+                <ImageButton
+                    android:id="@+id/ibt_cancel"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignLeft="@+id/ibt_pause"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignStart="@+id/ibt_pause"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/cancel2" />
 
-				<ImageButton
-					android:id="@+id/ibt_pause"
-					android:layout_width="40dp"
-					android:layout_height="40dp"
-					android:layout_alignParentBottom="true"
-					android:layout_marginLeft="10dp"
-					android:layout_toLeftOf="@+id/cb_lidar_display"
-					android:layout_toStartOf="@+id/cb_lidar_display"
-					android:background="@android:color/transparent"
-					android:scaleType="fitCenter"
-					app:srcCompat="@drawable/stop2" />
+                <ImageButton
+                    android:id="@+id/ibt_pause"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginLeft="10dp"
+                    android:layout_toLeftOf="@+id/cb_lidar_display"
+                    android:layout_toStartOf="@+id/cb_lidar_display"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/stop2" />
 
-			</LinearLayout>
+            </LinearLayout>
 
-			<LinearLayout
-				android:id="@+id/linearLayout2"
-				android:layout_width="130dp"
-				android:layout_height="match_parent"
-				android:layout_alignParentEnd="true"
-				android:layout_alignParentRight="true"
-				android:layout_alignParentTop="true"
-				android:orientation="vertical">
+            <LinearLayout
+                android:id="@+id/linearLayout2"
+                android:layout_width="130dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:orientation="vertical">
 
-				<Spinner
-					android:id="@+id/Spinnermaplist"
-					android:layout_width="match_parent"
-					android:layout_height="38dp"
-					android:layout_column="0"
-					android:layout_marginRight="3dp"
-					android:layout_marginTop="3dp"
-					android:layout_row="0"
-					android:background="@drawable/spinner2" />
+                <Spinner
+                    android:id="@+id/Spinnermaplist"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_column="0"
+                    android:layout_marginRight="3dp"
+                    android:layout_marginTop="3dp"
+                    android:layout_row="0"
+                    android:background="@drawable/spinner2" />
 
-				<ExpandableListView
-					android:id="@+id/elv_function"
-					android:layout_width="match_parent"
-					android:layout_height="40dp" />
+                <ExpandableListView
+                    android:id="@+id/elv_function"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp" />
 
-				<ScrollView
-					android:id="@+id/sv_control"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:layout_weight="0.09">
+                <ScrollView
+                    android:id="@+id/sv_control"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.09">
 
-					<LinearLayout
-						android:layout_width="match_parent"
-						android:layout_height="wrap_content"
-						android:orientation="vertical">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
-						<LinearLayout
-							android:layout_width="match_parent"
-							android:layout_height="match_parent"
-							android:layout_weight="0.07"
-							android:orientation="vertical"
-							android:weightSum="1">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="0.07"
+                            android:orientation="vertical"
+                            android:weightSum="1">
 
-							<LinearLayout
-								android:layout_width="match_parent"
-								android:layout_height="wrap_content"
-								android:orientation="horizontal">
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
 
-								<ExpandableListView
-									android:id="@+id/elv_setting"
-									android:layout_width="match_parent"
-									android:layout_height="71dp" />
-							</LinearLayout>
+                                <ExpandableListView
+                                    android:id="@+id/elv_setting"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="71dp" />
+                            </LinearLayout>
 
-							<LinearLayout
-								android:layout_width="match_parent"
-								android:layout_height="wrap_content"
-								android:layout_weight="1.13"
-								android:orientation="vertical">
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.13"
+                                android:orientation="vertical">
 
-								<Spinner
-									android:id="@+id/sp_station_list"
-									android:layout_width="match_parent"
-									android:layout_height="35dp"
-									android:layout_column="0"
-									android:layout_columnSpan="4"
-									android:layout_marginBottom="5dp"
-									android:layout_marginLeft="0dp"
-									android:layout_row="5"
-									android:layout_weight="1"
-									android:background="@drawable/station_spinner" />
+                                <Spinner
+                                    android:id="@+id/sp_station_list"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="35dp"
+                                    android:layout_column="0"
+                                    android:layout_columnSpan="4"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginLeft="0dp"
+                                    android:layout_row="5"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/station_spinner" />
 
-								<Spinner
-									android:id="@+id/sp_path_list"
-									android:layout_width="match_parent"
-									android:layout_height="35dp"
-									android:layout_column="0"
-									android:layout_columnSpan="4"
-									android:layout_marginBottom="5dp"
-									android:layout_marginLeft="0dp"
-									android:layout_row="5"
-									android:layout_weight="1"
-									android:background="@drawable/path_spinner" />
+                                <Spinner
+                                    android:id="@+id/sp_path_list"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="35dp"
+                                    android:layout_column="0"
+                                    android:layout_columnSpan="4"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginLeft="0dp"
+                                    android:layout_row="5"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/path_spinner" />
 
-							</LinearLayout>
+                            </LinearLayout>
 
-							<LinearLayout
-								android:layout_width="match_parent"
-								android:layout_height="match_parent"
-								android:layout_weight="0"
-								android:orientation="horizontal">
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                android:orientation="horizontal">
 
-								<com.lynnsion.lmnpuht.CustomExpandableListView
-									android:id="@+id/elv"
-									android:layout_width="match_parent"
-									android:layout_height="wrap_content" />
+                                <com.lynnsion.lmnpuht.CustomExpandableListView
+                                    android:id="@+id/elv"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content" />
 
-							</LinearLayout>
+                            </LinearLayout>
 
-							<Spinner
-								android:id="@+id/sp_virtual_wall"
-								android:layout_width="match_parent"
-								android:layout_height="35dp"
-								android:layout_weight="1"
-								android:background="@drawable/wall_spinner" />
+                            <Spinner
+                                android:id="@+id/sp_virtual_wall"
+                                android:layout_width="match_parent"
+                                android:layout_height="35dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/wall_spinner" />
 
-						</LinearLayout>
+                        </LinearLayout>
 
-						<ExpandableListView
-							android:id="@+id/elv_virtual_wall"
-							android:layout_width="match_parent"
-							android:layout_height="wrap_content" />
+                        <ExpandableListView
+                            android:id="@+id/elv_virtual_wall"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
 
-						<Spinner
-							android:id="@+id/sp_task_list"
-							android:layout_width="match_parent"
-							android:layout_height="35dp"
-							android:layout_weight="1"
-							android:background="@drawable/task_spinner" />
+                        <Spinner
+                            android:id="@+id/sp_task_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="35dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/task_spinner" />
 
-						<ExpandableListView
-							android:id="@+id/elv_task_manage"
-							android:layout_width="match_parent"
-							android:layout_height="wrap_content" />
+                        <ExpandableListView
+                            android:id="@+id/elv_task_manage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
 
-					</LinearLayout>
-				</ScrollView>
-			</LinearLayout>
+                    </LinearLayout>
+                </ScrollView>
+            </LinearLayout>
 
-			<com.lynnsion.lmnpuht.JoystickView
-				android:id="@+id/joystickLeft"
-				android:layout_width="100dp"
-				android:layout_height="100dp"
-				android:layout_alignParentBottom="true"
-				android:layout_marginBottom="20dp"
-				android:layout_marginLeft="20dp"
-				android:elevation="21dp" />
+            <com.lynnsion.lmnpuht.JoystickView
+                android:id="@+id/joystickLeft"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="20dp"
+                android:layout_marginLeft="20dp"
+                android:elevation="21dp" />
+
+            <Button
+                android:id="@+id/btnDingdianPlay"
+                android:layout_width="120dp"
+                android:layout_height="90dp"
+                android:layout_alignBottom="@+id/joystickLeft"
+                android:layout_alignEnd="@+id/pg_my_progressbar"
+                android:text="定点播放" />
 
 
-			<TextView
-				android:id="@+id/tv_act_enc"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignStart="@+id/tv_robot_status"
-				android:layout_below="@+id/tv_robot_status"
-				android:text="码盘数值：0,0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <Button
+                android:id="@+id/btnNext"
+                android:layout_width="120dp"
+                android:layout_height="90dp"
+                android:layout_alignBottom="@+id/btnDingdianPlay"
+                android:layout_toEndOf="@+id/btnDingdianPlay"
+                android:text="next" />
 
-			<TextView
-				android:id="@+id/tv_alert"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tv_act_enc"
-				android:layout_centerHorizontal="true"
-				android:text="NPU未连接，长按界面重新连接！"
-				android:textColor="@android:color/holo_red_dark"
-				android:textSize="20sp" />
+            <TextView
+                android:id="@+id/tv_act_enc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignStart="@+id/tv_robot_status"
+                android:layout_below="@+id/tv_robot_status"
+                android:text="码盘数值：0,0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
 
-			<view
-				android:id="@+id/pg_my_progressbar"
-				class="com.lynnsion.lmnpuht.TextProgressBar"
-				id="@+id/view6"
-				layout_below="@+id/tv_alert"
-				layout_marginTop="43dp"
-				layout_toLeftOf="@+id/tv_act_motor_spd"
-				layout_toStartOf="@+id/tv_act_motor_spd"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignParentBottom="false"
-				android:layout_centerInParent="true"
-				android:textSize="24sp" />
+            <TextView
+                android:id="@+id/tv_alert"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_act_enc"
+                android:layout_centerHorizontal="true"
+                android:text="NPU未连接，长按界面重新连接！"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="20sp" />
 
-			<TextView
-				android:id="@+id/tv_app_version"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignBottom="@+id/tv_alert"
-				android:text="测试版v1.0.6_1803141100"
-				android:visibility="invisible"
-				android:textColor="@android:color/holo_red_dark" />
+            <view
+                android:id="@+id/pg_my_progressbar"
+                class="com.lynnsion.lmnpuht.TextProgressBar"
+                id="@+id/view6"
+                layout_below="@+id/tv_alert"
+                layout_marginTop="43dp"
+                layout_toLeftOf="@+id/tv_act_motor_spd"
+                layout_toStartOf="@+id/tv_act_motor_spd"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="false"
+                android:layout_centerInParent="true"
+                android:textSize="24sp" />
 
-			<TextView
-				android:id="@+id/tv_npu_version"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tv_app_version"
-				android:text="npu_v1.1"
-				android:visibility="invisible"
-				android:textColor="@android:color/holo_red_dark" />
+            <TextView
+                android:id="@+id/tv_app_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/tv_alert"
+                android:text="测试版v1.0.6_1803141100"
+                android:textColor="@android:color/holo_red_dark"
+                android:visibility="invisible" />
 
-			<TextView
-				android:id="@+id/tv_imu_data"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_alignBottom="@+id/tv_act_enc"
-				android:layout_alignLeft="@+id/tv_act_pose"
-				android:layout_alignStart="@+id/tv_act_pose"
-				android:layout_below="@+id/tv_act_pose"
-				android:text="IMU:0"
-				android:textColor="@android:color/holo_orange_dark"
-				android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_npu_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_app_version"
+                android:text="npu_v1.1"
+                android:textColor="@android:color/holo_red_dark"
+                android:visibility="invisible" />
 
-		</RelativeLayout>
-		<!-- end set valdata -->
-	</LinearLayout>
+            <TextView
+                android:id="@+id/tv_imu_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/tv_act_enc"
+                android:layout_alignLeft="@+id/tv_act_pose"
+                android:layout_alignStart="@+id/tv_act_pose"
+                android:layout_below="@+id/tv_act_pose"
+                android:text="IMU:0"
+                android:textColor="@android:color/holo_orange_dark"
+                android:textSize="10sp" />
+
+        </RelativeLayout>
+        <!-- end set valdata -->
+    </LinearLayout>
 
 </LinearLayout>
