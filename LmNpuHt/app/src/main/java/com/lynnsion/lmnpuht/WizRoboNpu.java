@@ -9,6 +9,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -78,6 +79,8 @@ import com.example.permission.FloatWindowManager;
 import com.jude.rollviewpager.RollPagerView;
 import com.jude.rollviewpager.adapter.LoopPagerAdapter;
 import com.lynnsion.lmnpuht.Lynnsion.FileUtil;
+import com.lynnsion.lmnpuht.Lynnsion.MusicBroadCastReceiver;
+import com.lynnsion.lmnpuht.Lynnsion.PlayMusciServices;
 import com.wizrobonpu.NpuIceI;
 import com.wizrobonpu.WizRoboNpuUdp;
 
@@ -430,23 +433,49 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         }
     };
 
-//读写权限
+    //读写权限
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE };
-//定点导航
-    private Button btn2Dingdian, btnNext, btnPlayBack, btnPlayStop, btnPlayNext;
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    //定点导航
+    private Button btn2Dingdian, btnNextPose;
     public static int listCount = 0, dingDianlistItem = 0;
     public static boolean isDingdianPlaying = false, isNextPlay = false;
-    private Thread dingDianPlayThred;
+    private Thread dingDianPlayThred, dingDianPlayNpuStateThread;
 
-//图片轮播
-    private LinearLayout linearLayoutPlay;
-    private RollPagerView rollPagerViewPlay;
-    private List<String> listPicPaths = new ArrayList<>();
+    private LinearLayout linearLayoutPlay, linearLayoutBtnTest;
+
+    public static NaviState naviStateDingdianPlay = NaviState.IDLE;
+    public static NaviState lastNaviState = NaviState.IDLE;
+
+
+    //图片轮播
+    private static List<String> listPicPaths = new ArrayList<>();
+    private RollPagerView rollPagerViewDingdianPlay;
+    private final String PICPATHS = "/mnt/sdcard/tuPian";
+    private Button btnPlayStop, btnPlayNext, btnFinishMusic, btnReachPose;
     private FileUtil fileUtil = new FileUtil();
-    private final String PICPATHS =  "/mnt/sdcard/tuPian";
+    private ImageLoopAdapter imageLoopAdapter;
+
+    //音乐播放
+    public static boolean isMusicPlayOver = true;
+
+    private MusicBroadCastReceiver receiver;
+    IntentFilter filter = new IntentFilter();
+
+
+    public static final int PLAY_MUSIC = 1;
+    public static final int PAUSE_MUSIC = 2;
+    public static final int STOP_MUSIC = 3;
+
+    public static final int GOING_POSE = 1;
+    public static final int GO_POSE_SUCCESS = 2;
+    public static final int MUSICPLAYOVER = 3;
+
+
+    private TextView tvTest;
 
 
     /**
@@ -458,7 +487,21 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         setContentView(R.layout.main);
 
         verifyStoragePermissions(WizRoboNpu.this);
+
+//        listPicPaths = fileUtil.getPicturePathList(PICPATHS+ "/" + 1);
+//        rollPagerViewDingdianPlay = (RollPagerView) findViewById(R.id.rpvPicturePlay);
+//        imageLoopAdapter =  new ImageLoopAdapter(rollPagerViewDingdianPlay);
+//        rollPagerViewDingdianPlay.setAdapter(imageLoopAdapter);
+//        rollPagerViewDingdianPlay.setPlayDelay(2000);
+
+
         initLayout();
+
+        receiver = new MusicBroadCastReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.complete");
+        registerReceiver(receiver, filter);
+
 
         // get mapName
         try {
@@ -466,7 +509,6 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         } catch (NpuException e) {
             e.printStackTrace();
         }
-
 
         setWifiDormancy();
         setWifiNeverSleep();
@@ -1324,40 +1366,76 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnDingdianPlay:
-//                linearLayoutPlay.setVisibility(View.VISIBLE);
+                linearLayoutPlay.setVisibility(View.VISIBLE);
                 dingDianPlay();
+
                 break;
-            case R.id.btnNext:
+
+            case R.id.btnNextPose:
                 if (isNextPlay == false) {
                     isNextPlay = true;
                     new Thread(dingDianplayRunnable2).start();
                 }
+                tvTest.setText("going to next");
+                gotoNextPose();
                 break;
-            case R.id.btnPlayBack:
+
+
+            case R.id.btnFinishMusic:
+                playMusic(STOP_MUSIC);
+                if (isNextPlay == false) {
+                    isNextPlay = true;
+                    new Thread(dingDianplayRunnable2).start();
+                }
+                tvTest.setText("going to next");
+                gotoNextPose();
+                btnReachPose.setText("going...");
                 break;
+
             case R.id.btnPlayStop:
+                if (isDingdianPlaying == true) {
+                    stopGoPose();
+                    isDingdianPlaying = false;
+                    linearLayoutPlay.setVisibility(View.GONE);
+
+
+                } else {
+                    Log.e("btn", "isDingdianPlaying = false");
+                    tvTest.setText("isDingdianPlaying = false");
+                }
+                break;
+
+            case R.id.btnPlayNext:
+                if (isDingdianPlaying == true) {
+                    gotoNextPose();
+                } else {
+                    Log.e("btn", "isDingdianPlaying = false");
+                    tvTest.setText("isDingdianPlaying = false");
+                }
 
                 break;
-            case R.id.btnPlayNext:
-//                if (isNextPlay == false) {
-//                    isNextPlay = true;
-//                    new Thread(dingDianplayRunnable2).start();
-//                }
+
+            case R.id.btnReachPoseSuccess:
+
                 break;
+
             default:
                 break;
         }
     }
 
     private void initLayout() {
+
+        tvTest = (TextView) findViewById(R.id.textTestLynnsion);
+
         btn2Dingdian = (Button) findViewById(R.id.btnDingdianPlay);
         btn2Dingdian.setOnClickListener(this);
 
-        btnNext = (Button) findViewById(R.id.btnNext);
-        btnNext.setOnClickListener(this);
+        btnNextPose = (Button) findViewById(R.id.btnNextPose);
+        btnNextPose.setOnClickListener(this);
 
-        btnPlayBack = (Button) findViewById(R.id.btnPlayBack);
-        btnPlayBack.setOnClickListener(this);
+        btnFinishMusic = (Button) findViewById(R.id.btnFinishMusic);
+        btnFinishMusic.setOnClickListener(this);
 
         btnPlayStop = (Button) findViewById(R.id.btnPlayStop);
         btnPlayStop.setOnClickListener(this);
@@ -1365,36 +1443,17 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         btnPlayNext = (Button) findViewById(R.id.btnPlayNext);
         btnPlayNext.setOnClickListener(this);
 
-        linearLayoutPlay = (LinearLayout) findViewById(R.id.linearlayoutRollPageView);
-
-        rollPagerViewPlay = (RollPagerView) findViewById(R.id.rpvPicturePlay);
-
-    }
-
-    private class ImageLoopAdapter extends LoopPagerAdapter {
-
-        public ImageLoopAdapter(RollPagerView viewPager) {
-            super(viewPager);
-        }
-
-        @Override
-        public View getView(ViewGroup container, int position) {
-            ImageView view = new ImageView(container.getContext());
-            view.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            view.setImageBitmap(getDiskBitmap(listPicPaths.get(position)));
-            return view;
-        }
+//        btnFinishSong = (Button) findViewById(R.id.btnFinishSong);
+//        btnFinishSong.setOnClickListener(this);
 
 
+        btnReachPose = (Button) findViewById(R.id.btnReachPoseSuccess);
+        btnReachPose.setOnClickListener(this);
 
-        @Override
-        public int getRealCount() {
-            if(listPicPaths != null){
-                return listPicPaths.size();
-            }
-            return 0;
-        }
+        linearLayoutPlay = (LinearLayout) findViewById(R.id.linearlayoutPlay);
+        linearLayoutBtnTest = (LinearLayout) findViewById(R.id.linearBtnTest);
+
+
     }
 
 
@@ -1656,6 +1715,8 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         getDataHandler1.removeCallbacksAndMessages(null);
         getDataHandler.removeCallbacksAndMessages(null);
         setManualVelHandler.removeCallbacksAndMessages(null);
+
+        unregisterReceiver(receiver);
     }
 
     @Override
@@ -5122,21 +5183,60 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     }
 
 
+    private Runnable getDingdianPlayNpuState = new Runnable() {
+        @Override
+        public void run() {
+            while (isDingdianPlaying == true) {
+
+                if(isMusicPlayOver == true){
+                    Message msg = new Message();
+                    msg.what = MUSICPLAYOVER;
+                    dingDianPlayHandler.sendMessage(msg);
+                }
+
+                try {
+                    naviStateDingdianPlay = mynpu.GetNaviState();
+                    if (naviStateDingdianPlay == NaviState.ACTIVE) {
+                        lastNaviState = naviStateDingdianPlay;
+                    }
+                    if (naviStateDingdianPlay == NaviState.SUCCEEDED && lastNaviState == NaviState.ACTIVE) {
+//                        Log.e("npu state", "get state =" + naviStateDingdianPlay.toString());
+                        Message msg = new Message();
+                        msg.what = GO_POSE_SUCCESS;
+                        dingDianPlayHandler.sendMessage(msg);
+                        lastNaviState = naviStateDingdianPlay;
+                    }
+                } catch (NpuException e) {
+                    e.printStackTrace();
+                }
+
+                try {
+                    Thread.sleep(400);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+
     private void dingDianPlay() {
         if (imgStationList != null) {
             if (isDingdianPlaying == false) {
                 isDingdianPlaying = true;
                 listCount = imgStationList.length;
                 dingDianlistItem = 0;
-                if (dingDianPlayThred != null && dingDianPlayThred.isAlive()) {
-                    dingDianPlayThred.interrupt();
+                if (dingDianPlayNpuStateThread != null && dingDianPlayNpuStateThread.isAlive()) {
+                    dingDianPlayNpuStateThread.interrupt();
                 }
-
-                dingDianPlayThred = new Thread(dingDianPlayRunnable);
-                dingDianPlayThred.start();
+                dingDianPlayNpuStateThread = new Thread(getDingdianPlayNpuState);
+                dingDianPlayNpuStateThread.start();
             }
+
+            gotoPose(dingDianlistItem);
+            playFilePic((dingDianlistItem + 1));
         }
     }
+
 
     private Runnable dingDianplayRunnable2 = new Runnable() {
         @Override
@@ -5150,15 +5250,35 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         }
     };
 
-    private void dingDianGo(int itemCount) {
-//        try {
-//            mynpu.GotoStation(mapname, imgStationList[itemCount].info.id.toString());
-//            Log.e("play", "dingDianlistItem =" + dingDianlistItem + "listName =" + imgStationList[itemCount].info.id.toString());
-//
-//        } catch (NpuException e) {
-//            e.printStackTrace();
-//        }
+    private void gotoPose(int PoseListItemCount) {
+        try {
+            mynpu.GotoStation(mapname, imgStationList[PoseListItemCount].info.id.toString());
+            Log.e("play", "dingDianlistItem =" + dingDianlistItem + "listName =" + imgStationList[PoseListItemCount].info.id.toString());
 
+        } catch (NpuException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void gotoNextPose() {
+        if (isDingdianPlaying == true) {
+            if (dingDianlistItem < listCount) {
+                dingDianlistItem++;
+            }
+            if (dingDianlistItem == listCount) {
+                dingDianlistItem = 0;
+            }
+            gotoPose(dingDianlistItem);
+            playFilePic((dingDianlistItem + 1));
+        } else {
+            tvTest.setText("isDingdianPlaying == false");
+        }
+
+    }
+
+
+    private void dingDianGo(int itemCount) {
         Log.e("play", "goto " + itemCount + " post");
         dingDianlistItem++;
         listPicPaths = fileUtil.getPicturePathList(PICPATHS + "/" + itemCount);
@@ -5166,47 +5286,20 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
 
     }
 
-    private Runnable dingDianPlayRunnable = new Runnable() {
-        @Override
-        public void run() {
-            while (isDingdianPlaying == true) {
-                if (isNextPlay == true) {
-//                        Log.e("play", "mapName =" + mapname + "\ndingDianlistItem =" + dingDianlistItem + "\n listName =" + imgStationList[dingDianlistItem].info.id.toString());
-                   Log.e("play","dingDianPlayRunnable start");
-                    dingDianGo(dingDianlistItem);
-                    isNextPlay = false;
-                    try {
-                        Thread.currentThread().sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-
-            }
-
-        }
-    };
-
 
     Handler dingDianPlayHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            Bundle data = msg.getData();
-            String val = data.getString("value");
-
-            switch (val) {
-                case "":
-                    break;
-                default:
-                    Toast.makeText(WizRoboNpu.this, val, Toast.LENGTH_SHORT).show();
-                    break;
-            }
-
             switch (msg.what) {
-                case 1:
-                    btn2Dingdian.setText(val);
+                case GOING_POSE:
+                    tvTest.setText("going pose");
+                case GO_POSE_SUCCESS:
+                    btnReachPose.setText("success pose item =" + dingDianlistItem);
+                    playMusic(PLAY_MUSIC, (dingDianlistItem + 1));
+                    break;
+                case MUSICPLAYOVER:
+                    gotoNextPose();
                     break;
 
                 default:
@@ -5215,7 +5308,57 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         }
     };
 
+    public void playFilePic(int fileId) {
+        listPicPaths.clear();
+        System.gc();
+        listPicPaths = fileUtil.getPicturePathList(PICPATHS + "/" + fileId);
 
+        rollPagerViewDingdianPlay = (RollPagerView) findViewById(R.id.rpvPicturePlay);
+        imageLoopAdapter = new ImageLoopAdapter(rollPagerViewDingdianPlay);
+        rollPagerViewDingdianPlay.setAdapter(imageLoopAdapter);
+        rollPagerViewDingdianPlay.setPlayDelay(2000);
+    }
+
+    public class ImageLoopAdapter extends LoopPagerAdapter {
+        public ImageLoopAdapter(RollPagerView viewPager) {
+            super(viewPager);
+        }
+
+        @Override
+        public View getView(ViewGroup container, int position) {
+
+            ImageView view = new ImageView(container.getContext());
+            view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            view.setImageBitmap(getDiskBitmap(listPicPaths.get(position)));
+            Log.e("getview", "position = " + position);
+
+            return view;
+        }
+
+        @Override
+        public int getRealCount() {
+            if (listPicPaths != null) {
+                return listPicPaths.size();
+            } else
+                return 0;
+        }
+    }
+
+    private Bitmap getDiskBitmap(String pathString) {
+        Bitmap bitmap = null;
+        try {
+            File file = new File(pathString);
+            if (file.exists()) {
+                bitmap = BitmapFactory.decodeFile(pathString);
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+        return bitmap;
+    }
+
+    //获取文件读取权限
     public static void verifyStoragePermissions(Activity activity) {
         // Check if we have write permission
         int permission = ActivityCompat.checkSelfPermission(activity,
@@ -5227,23 +5370,73 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         }
     }
 
-    private Bitmap getDiskBitmap(String pathString)
-    {
-        Bitmap bitmap = null;
-        try
-        {
-            File file = new File(pathString);
-            if(file.exists())
-            {
-                bitmap = BitmapFactory.decodeFile(pathString);
-            }
-        } catch (Exception e)
-        {
-            // TODO: handle exception
-        }
-        return bitmap;
+    private void playMusic(int type) {
+        //启动服务，播放音乐
+        Intent intent = new Intent(this, PlayMusciServices.class);
+        intent.putExtra("type", type);
+        startService(intent);
     }
 
+
+    private void playMusic(int type, int playItem) {
+        //启动服务，播放音乐
+        Intent intent = new Intent(this, PlayMusciServices.class);
+        intent.putExtra("type", type);
+        intent.putExtra("playItem", playItem);
+        startService(intent);
+    }
+
+
+    private void stopGoPose() {
+        try {
+            if (mynpu.isInited) {
+                mynpu.CancelTask();
+                Toast toast = Toast.makeText(getApplicationContext(), "已停止执行任务! ", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+            }
+        } catch (NpuException e) {
+            NpuExceptionAlert(e);
+            return;
+        }
+    }
+
+
+    //    private Runnable dingDianPlayRunnable = new Runnable() {
+//        @Override
+//        public void run() {
+//            while (isDingdianPlaying == true) {
+//                if (isNextPlay == true) {
+////                 Log.e("play", "mapName =" + mapname + "\ndingDianlistItem =" + dingDianlistItem + "\n listName =" + imgStationList[dingDianlistItem].info.id.toString());
+//                    Log.e("play", "dingDianPlayRunnable start");
+//                    dingDianGo(dingDianlistItem);
+//                    isNextPlay = false;
+//                    try {
+//                        Thread.currentThread().sleep(500);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        }
+//    };
+
+
+    //    private void dingDianPlay() {
+//        if (imgStationList != null) {
+//            if (isDingdianPlaying == false) {
+//                isDingdianPlaying = true;
+//                listCount = imgStationList.length;
+//                dingDianlistItem = 0;
+//                if (dingDianPlayThred != null && dingDianPlayThred.isAlive()) {
+//                    dingDianPlayThred.interrupt();
+//                }
+//
+//                dingDianPlayThred = new Thread(dingDianPlayRunnable);
+//                dingDianPlayThred.start();
+//            }
+//        }
+//    }
 
 }
 

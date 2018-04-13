@@ -19,8 +19,6 @@ public class FileUtil {
 
     public FileUtil() {
 
-
-
     }
 
 
@@ -63,7 +61,7 @@ public class FileUtil {
                     if (getDiskBitmap(fi.getPath()).getAllocationByteCount() < 32000000) {
                         listPath.add(fi.getPath());
                     }
-//                    Log.e("LoadPictureAndMusic","get list path =" + fi.getPath());
+                    Log.e("LoadPictureAndMusic","get list path =" + fi.getPath());
                 }
             }
         }

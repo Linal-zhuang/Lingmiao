@@ -44,7 +44,7 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
-    private Button btnStop, btnNext, btnBack;
+    private Button btnStop, btnNext, btnBack, btnResume;
 
     private FileUtil fileUtil = new FileUtil();
 
@@ -57,11 +57,14 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
     /**
      * 规定开始音乐、暂停音乐、结束音乐的标志
      */
-    public  static final int PLAY_MUSIC=1;
-    public  static final int PAUSE_MUSIC=2;
-    public  static final int STOP_MUSIC=3;
+    public static final int PLAY_MUSIC = 1;
+    public static final int PAUSE_MUSIC = 2;
+    public static final int STOP_MUSIC = 3;
+
+    public static boolean isMusicPlayOver = true;
 
     private MusicBroadCastReceiver receiver;
+    IntentFilter filter = new IntentFilter();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,6 +74,11 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
         verifyStoragePermissions(LoadPictureAndMusic.this);
 
         listPath = fileUtil.getPicturePathList("/mnt/sdcard/tuPian" + "/" + 2);
+
+        filter.addAction("com.complete");
+        registerReceiver(receiver, filter);
+        playMusic(PLAY_MUSIC, 2);
+        isMusicPlayOver = false;
 
         rollPagerViewPlay = (RollPagerView) findViewById(R.id.picPagerView);
         imageLoopAdapter = new ImageLoopAdapter(rollPagerViewPlay);
@@ -83,12 +91,14 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
         btnBack.setOnClickListener(this);
         btnNext = (Button) findViewById(R.id.btnPicNext);
         btnNext.setOnClickListener(this);
+        btnResume = (Button) findViewById(R.id.btnPicResume);
+        btnResume.setOnClickListener(this);
 
 
-        receiver=new MusicBroadCastReceiver();
-        IntentFilter filter=new IntentFilter();
+        receiver = new MusicBroadCastReceiver();
+        IntentFilter filter = new IntentFilter();
         filter.addAction("com.complete");
-        registerReceiver(receiver,filter);
+        registerReceiver(receiver, filter);
 
 
     }
@@ -107,29 +117,45 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
 
     @Override
     public void onClick(View v) {
-        IntentFilter filter=new IntentFilter();
+
         switch (v.getId()) {
             case R.id.btnPicBack:
                 playFilePic(1);
 
+                playMusic(STOP_MUSIC);
                 filter.addAction("com.complete");
-                registerReceiver(receiver,filter);
-                playMusic(PLAY_MUSIC,2);
+                registerReceiver(receiver, filter);
+                playMusic(PLAY_MUSIC, 1);
+                isMusicPlayOver = false;
                 break;
             case R.id.btnPicNext:
                 playFilePic(3);
 
+                playMusic(STOP_MUSIC);
                 filter.addAction("com.complete");
-                registerReceiver(receiver,filter);
-                playMusic(PLAY_MUSIC,3);
+                registerReceiver(receiver, filter);
+                playMusic(PLAY_MUSIC, 3);
+                isMusicPlayOver = false;
                 break;
             case R.id.btnPicStop:
+
+                playMusic(STOP_MUSIC);
+                isMusicPlayOver = true;
+
+                break;
+
+            case R.id.btnPicResume:
                 if (rollPagerViewPlay.isPlaying()) {
                     rollPagerViewPlay.pause();
+                    if(isMusicPlayOver == false){
+                        playMusic(PAUSE_MUSIC);
+                    }
                 } else {
                     rollPagerViewPlay.resume();
+                    if(isMusicPlayOver == true){
+                        playMusic(PLAY_MUSIC);
+                    }
                 }
-                playMusic(STOP_MUSIC);
 
 
                 break;
@@ -195,18 +221,17 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
 
     private void playMusic(int type) {
         //启动服务，播放音乐
-        Intent intent=new Intent(this,PlayMusciServices.class);
-        intent.putExtra("type",type);
+        Intent intent = new Intent(this, PlayMusciServices.class);
+        intent.putExtra("type", type);
         startService(intent);
     }
 
 
-
     private void playMusic(int type, int playItem) {
         //启动服务，播放音乐
-        Intent intent=new Intent(this,PlayMusciServices.class);
-        intent.putExtra("type",type);
-        intent.putExtra("playItem",playItem);
+        Intent intent = new Intent(this, PlayMusciServices.class);
+        intent.putExtra("type", type);
+        intent.putExtra("playItem", playItem);
         startService(intent);
     }
 
@@ -240,7 +265,6 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
 //
 //        }
 //    }
-
 
 
 //            public int getBitmapSize(Bitmap bitmap) {
