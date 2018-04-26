@@ -31,7 +31,8 @@ import java.lang.reflect.Method;
  * @since 2016-10-17
  */
 
-public class FloatWindowManager {
+public class
+FloatWindowManager {
     private static final String TAG = "FloatWindowManager";
 
     private static volatile FloatWindowManager instance;

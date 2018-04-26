@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <receiver android:name=".NetCheckReceiver">
         <intent-filter>
@@ -30,7 +30,8 @@
         android:theme="@style/AppTheme">
 
 
-        <activity android:name=".WizRoboNpu"
+        <activity
+            android:name=".WizRoboNpu"
             android:alwaysRetainTaskState="true"
             android:clearTaskOnLaunch="false"
             android:configChanges="screenSize|keyboardHidden|orientation"
@@ -49,13 +50,29 @@
 
         <activity
             android:name=".SetTask"
-            android:screenOrientation="landscape"
-            android:windowSoftInputMode="stateVisible|adjustPan"
             android:label="@string/title_activity_set_task"
-            android:theme="@style/AppTheme">
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="stateVisible|adjustPan"></activity>
+
+        <activity
+            android:name=".Lynnsion.LoadPictureAndMusic"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden|adjustPan">
+            <!--<intent-filter>-->
+            <!--<action android:name="android.intent.action.MAIN" />-->
+
+            <!--<category android:name="android.intent.category.LAUNCHER" />-->
+            <!--</intent-filter>-->
         </activity>
 
-        <activity android:name=".Lynnsion.LoadPictureAndMusic"
+        <service
+            android:name=".Lynnsion.PlayMusciServices"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".Lynnsion.stateMachine.TestStateMachineActivity"
             android:screenOrientation="landscape"
             android:windowSoftInputMode="stateHidden|adjustPan">
             <!--<intent-filter>-->
@@ -65,9 +82,15 @@
             <!--</intent-filter>-->
         </activity>
 
-        <service android:name=".Lynnsion.PlayMusciServices"
-            android:exported="true"
-            android:enabled="true"/>
+        <activity android:name=".Lynnsion.MusicPlayActivity"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden|adjustPan">
+            <!--<intent-filter>-->
+            <!--<action android:name="android.intent.action.MAIN" />-->
+
+            <!--<category android:name="android.intent.category.LAUNCHER" />-->
+            <!--</intent-filter>-->
+        </activity>
 
     </application>
 

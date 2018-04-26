@@ -48,7 +48,7 @@
 
             <Button
                 android:id="@+id/btnReachPoseSuccess"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="reach Pose" />
         </LinearLayout>
@@ -478,18 +478,12 @@
 
                 <Button
                     android:id="@+id/btnNextPose"
-                    android:layout_width="60dp"
-                    android:layout_height="40dp"
+                    android:layout_width="70dp"
+                    android:layout_height="50dp"
                     android:layout_alignTop="@+id/btnDingdianPlay"
                     android:layout_toEndOf="@+id/btnDingdianPlay"
                     android:text="next" />
 
-                <Button
-                    android:id="@+id/btnFinishSong"
-                    android:layout_width="60dp"
-                    android:layout_height="40dp"
-                    android:text="finish song"
-                    android:visibility="gone"/>
             </LinearLayout>
 
 
@@ -546,11 +540,32 @@
                 android:visibility="invisible" />
 
             <TextView
-                android:id="@+id/textTestLynnsion"
+                android:id="@+id/textTestnaviStateus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/tv_app_version"
-                android:text="testTXT"
+                android:text="navi"
+                android:textColor="@android:color/holo_red_dark" />
+            <TextView
+                android:id="@+id/textTestMusicStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textTestnaviStateus"
+                android:text="music"
+                android:textColor="@android:color/holo_red_dark" />
+            <TextView
+                android:id="@+id/textTestplayStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textTestMusicStatus"
+                android:text="play"
+                android:textColor="@android:color/holo_red_dark" />
+            <TextView
+                android:id="@+id/textTestplaycount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textTestplayStatus"
+                android:text="play count"
                 android:textColor="@android:color/holo_red_dark" />
 
             <TextView
@@ -564,6 +579,15 @@
                 android:text="IMU:0"
                 android:textColor="@android:color/holo_orange_dark"
                 android:textSize="10sp" />
+
+            <Button
+                android:id="@+id/btnFinishSong"
+                android:layout_width="80dp"
+                android:layout_height="60dp"
+                android:text="finish song"
+                android:visibility="visible"
+                android:layout_above="@+id/linearBtnTest"
+                android:layout_toEndOf="@+id/joystickLeft" />
 
         </RelativeLayout>
         <!-- end set valdata -->

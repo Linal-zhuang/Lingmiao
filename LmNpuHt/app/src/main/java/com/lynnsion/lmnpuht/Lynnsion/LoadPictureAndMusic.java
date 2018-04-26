@@ -54,6 +54,7 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
 
     private MediaPlayer mediaPlayer;
 
+
     /**
      * 规定开始音乐、暂停音乐、结束音乐的标志
      */
@@ -66,6 +67,8 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
     private MusicBroadCastReceiver receiver;
     IntentFilter filter = new IntentFilter();
 
+    private static int playcount = 0;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,11 +76,11 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
 
         verifyStoragePermissions(LoadPictureAndMusic.this);
 
-        listPath = fileUtil.getPicturePathList("/mnt/sdcard/tuPian" + "/" + 2);
+        listPath = fileUtil.getPicturePathList("/mnt/sdcard/tuPian" + "/" + 1);
 
         filter.addAction("com.complete");
         registerReceiver(receiver, filter);
-        playMusic(PLAY_MUSIC, 2);
+        playMusic(PLAY_MUSIC, 1);
         isMusicPlayOver = false;
 
         rollPagerViewPlay = (RollPagerView) findViewById(R.id.picPagerView);
@@ -120,21 +123,31 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
 
         switch (v.getId()) {
             case R.id.btnPicBack:
-                playFilePic(1);
+                playcount--;
+                if (playcount < 1) {
+                    playcount = 5;
+                }
+                playFilePic(playcount);
 
                 playMusic(STOP_MUSIC);
                 filter.addAction("com.complete");
                 registerReceiver(receiver, filter);
-                playMusic(PLAY_MUSIC, 1);
+                playMusic(PLAY_MUSIC, playcount);
                 isMusicPlayOver = false;
+
+
                 break;
             case R.id.btnPicNext:
-                playFilePic(3);
+                playcount++;
+                if (playcount > 5) {
+                    playcount = 1;
+                }
+                playFilePic(playcount);
 
                 playMusic(STOP_MUSIC);
                 filter.addAction("com.complete");
                 registerReceiver(receiver, filter);
-                playMusic(PLAY_MUSIC, 3);
+                playMusic(PLAY_MUSIC, playcount);
                 isMusicPlayOver = false;
                 break;
             case R.id.btnPicStop:
@@ -147,12 +160,12 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
             case R.id.btnPicResume:
                 if (rollPagerViewPlay.isPlaying()) {
                     rollPagerViewPlay.pause();
-                    if(isMusicPlayOver == false){
+                    if (isMusicPlayOver == false) {
                         playMusic(PAUSE_MUSIC);
                     }
                 } else {
                     rollPagerViewPlay.resume();
-                    if(isMusicPlayOver == true){
+                    if (isMusicPlayOver == true) {
                         playMusic(PLAY_MUSIC);
                     }
                 }

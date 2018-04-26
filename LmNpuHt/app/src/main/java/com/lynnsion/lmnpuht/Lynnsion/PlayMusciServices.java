@@ -26,6 +26,8 @@ public class PlayMusciServices extends Service {
 
     private final String MUSICPATH = "/mnt/sdcard/tuPian/";
 
+    private boolean isMusicPlay = false;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -52,6 +54,7 @@ public class PlayMusciServices extends Service {
         }
     }
 
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         int getPlayItem = intent.getIntExtra("playItem", 0);
@@ -63,9 +66,9 @@ public class PlayMusciServices extends Service {
 //                mediaPlayer = MediaPlayer.create(this, android.R.raw.birds);
                     try {
                         String strMusicpath = "";
-                        if(getPlayItem !=0){
+                        if (getPlayItem != 0) {
                             strMusicpath = fileUtil.getMusicPath("/mnt/sdcard/tuPian/" + getPlayItem);
-                        }else{
+                        } else {
                             strMusicpath = fileUtil.getMusicPath(MUSICPATH + 2);
                         }
 
@@ -77,6 +80,7 @@ public class PlayMusciServices extends Service {
                     }
                     //开始播放
                     mediaPlayer.start();
+                    isMusicPlay = true;
                     //是否循环播放
                     mediaPlayer.setLooping(false);
                     isStop = false;
@@ -95,6 +99,7 @@ public class PlayMusciServices extends Service {
                 if (mediaPlayer != null) {
                     //停止之后要开始播放音乐
                     mediaPlayer.stop();
+                    isMusicPlay = false;
                     isStop = true;
                 }
                 break;
@@ -105,6 +110,18 @@ public class PlayMusciServices extends Service {
 
         return START_NOT_STICKY;
     }
+
+
+    public boolean getPlayState(){
+        if(mediaPlayer.isPlaying()){
+            isMusicPlay = true;
+        }
+        if(mediaPlayer.isPlaying() == false){
+            isMusicPlay = false;
+        }
+        return isMusicPlay;
+    }
+
 
     @Override
     public void onDestroy() {
