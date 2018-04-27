@@ -116,6 +116,7 @@ import wizrobo_npu.NaviMode;
 import wizrobo_npu.NaviState;
 import wizrobo_npu.NpuException;
 import wizrobo_npu.NpuIcePrx;
+import wizrobo_npu.NpuState;
 import wizrobo_npu.PathInfo;
 import wizrobo_npu.PixelMat;
 import wizrobo_npu.Point3D;
@@ -444,7 +445,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     //定点导航
-    private Button btn2Dingdian, btnNextPose;
+    private Button btn2Dingdian, btnNextPose, btnCloseNpu;
     public static int listCount = 0, dingDianlistItem = 0;
     public static boolean isDingdianPlaying = false, isNextPlay = false;
     private Thread dingDianPlayThred, dingDianPlayNpuStateThread;
@@ -463,31 +464,24 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     private static List<String> listPicPaths = new ArrayList<>();
     private RollPagerView rollPagerViewDingdianPlay;
     private final String PICPATHS = "/mnt/sdcard/tuPian";
-    private Button btnPlayStop, btnPlayNext, btnFinishMusic, btnReachPose, btnFinishSong;
+    private Button btnPlayStop, btnPlayNext, btnFinishMusic, btnFinishSong;
     private FileUtil fileUtil = new FileUtil();
     private ImageLoopAdapter imageLoopAdapter;
 
     //音乐播放
-//    public static boolean isMusicPlayOver = true, isMusicPlayOnce = false;
-//    private boolean isMusicPlaying = false;
-//
-//    private MusicBroadCastReceiver receiver;
-//    IntentFilter filter = new IntentFilter();
 
     public static boolean isMusicPlayOnce = false, isMusicPlaying = false;
     private final String MUSICPATH = "/mnt/sdcard/tuPian/";
     private MediaPlayer mediaPlayer = new MediaPlayer();
     private int countId = 1;
 
-
-//    public static final int PLAY_MUSIC = 1;
-//    public static final int PAUSE_MUSIC = 2;
-//    public static final int STOP_MUSIC = 3;
-
     public static final int GOING_POSE = 1;
     public static final int GO_POSE_SUCCESS = 2;
     public static final int MUSICPLAYOVER = 3;
     public static final int TEST = 4;
+
+
+
 
 
     private TextView tvTestPlayStatus, tvTestMusicStatus, tvTextNaviStatus, tvtextPlaycount;
@@ -503,11 +497,6 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
 
         verifyStoragePermissions(WizRoboNpu.this);
 
-//        listPicPaths = fileUtil.getPicturePathList(PICPATHS+ "/" + 1);
-//        rollPagerViewDingdianPlay = (RollPagerView) findViewById(R.id.rpvPicturePlay);
-//        imageLoopAdapter =  new ImageLoopAdapter(rollPagerViewDingdianPlay);
-//        rollPagerViewDingdianPlay.setAdapter(imageLoopAdapter);
-//        rollPagerViewDingdianPlay.setPlayDelay(2000);
 
 
         initLayout();
@@ -1431,13 +1420,22 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
 
                 break;
 
-            case R.id.btnReachPoseSuccess:
-
-                break;
-
             case R.id.btnFinishSong:
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.reset();
+                }
+                break;
+
+            case R.id.btnCloseNpu:
+                try {
+//                    tvTextNaviStatus.setText("GetNpuState="+mynpu.GetNpuState());
+                    if(mynpu.GetNpuState() != NpuState.IDLE_STATE){
+                        Toast.makeText(WizRoboNpu.this,"请先退出导航或者扫图模式",Toast.LENGTH_SHORT).show();
+                    }else{
+                        mynpu.Shutdown();
+                    }
+                } catch (NpuException e) {
+                    e.printStackTrace();
                 }
                 break;
 
@@ -1472,13 +1470,11 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         btnFinishSong.setOnClickListener(this);
 
 
-        btnReachPose = (Button) findViewById(R.id.btnReachPoseSuccess);
-        btnReachPose.setOnClickListener(this);
+        btnCloseNpu = (Button) findViewById(R.id.btnCloseNpu);
+        btnCloseNpu.setOnClickListener(this);
 
         linearLayoutPlay = (LinearLayout) findViewById(R.id.linearlayoutPlay);
         linearLayoutBtnTest = (LinearLayout) findViewById(R.id.linearBtnTest);
-
-
     }
 
 
