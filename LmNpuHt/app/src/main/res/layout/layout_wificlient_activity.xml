@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="get message :"
+        android:textSize="20sp" />
+
+    <android.support.v7.widget.AppCompatEditText
+        android:id="@+id/editMessageClient"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:hint="wait get message"
+        android:textSize="20sp"
+        android:layout_below="@+id/btnConnect"
+        android:layout_alignParentStart="true" />
+
+    <android.support.v7.widget.AppCompatEditText
+        android:id="@+id/appCompatEditTextIp"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView2"
+        android:layout_marginTop="26dp"
+        android:hint="Ip"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/btnConnect"
+        android:layout_width="wrap_content"
+        android:layout_height="70dp"
+        android:text="connect Service"
+        android:layout_marginStart="27dp"
+        android:layout_alignBaseline="@+id/appCompatEditTextIp"
+        android:layout_alignBottom="@+id/appCompatEditTextIp"
+        android:layout_toEndOf="@+id/appCompatEditTextIp" />
+
+    <Button
+        android:id="@+id/btnSendMsgClient"
+        android:layout_width="wrap_content"
+        android:layout_height="70dp"
+        android:text="send message"
+        android:layout_marginTop="19dp"
+        android:layout_below="@+id/editMessageClient"
+        android:layout_alignParentStart="true" />
+
+
+</RelativeLayout>
