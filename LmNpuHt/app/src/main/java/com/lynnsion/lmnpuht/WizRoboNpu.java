@@ -147,6 +147,9 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     private static CheckBox cb_cruise_control;
     private TextProgressBar pg_my_progressbar;
     public static DisplayMetrics dm = new DisplayMetrics();
+
+
+
     
 
     ExpandableListView tempParent;
