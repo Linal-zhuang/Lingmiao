@@ -103,7 +103,6 @@ public class LoadPictureAndMusic extends AppCompatActivity implements View.OnCli
         filter.addAction("com.complete");
         registerReceiver(receiver, filter);
 
-
     }
 
     public void playFilePic(int fileId) {

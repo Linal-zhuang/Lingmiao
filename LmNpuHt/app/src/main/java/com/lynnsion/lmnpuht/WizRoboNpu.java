@@ -148,10 +148,6 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     private TextProgressBar pg_my_progressbar;
     public static DisplayMetrics dm = new DisplayMetrics();
 
-
-
-    
-
     ExpandableListView tempParent;
     View tempView;
     public static ViewGroup track_navi_parent, slam_parent;
