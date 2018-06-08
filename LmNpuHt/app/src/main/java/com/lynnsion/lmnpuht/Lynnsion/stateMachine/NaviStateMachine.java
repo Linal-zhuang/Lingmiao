@@ -6,9 +6,6 @@ import android.util.Log;
 import com.lynnsion.lmnpuht.Lynnsion.stateMachine.util.State;
 import com.lynnsion.lmnpuht.Lynnsion.stateMachine.util.StateMachine;
 
-/**
- * Created by Lynnsion on 2018/4/17.
- */
 
 @SuppressWarnings("SpellCheckingInspection")
 public class NaviStateMachine extends StateMachine {

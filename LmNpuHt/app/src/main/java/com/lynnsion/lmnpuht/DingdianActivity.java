@@ -28,10 +28,6 @@ import wizrobo_npu.NpuException;
 import wizrobo_npu.NpuIcePrx;
 import wizrobo_npu.ServerState;
 
-/**
- * Created by Lynnsion on 2018/4/4.
- */
-
 public class DingdianActivity extends AppCompatActivity implements JoystickView.JoystickListener{
 
     private JoystickView joystickViewDingdian;

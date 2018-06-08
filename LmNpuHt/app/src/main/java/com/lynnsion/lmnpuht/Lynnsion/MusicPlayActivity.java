@@ -18,9 +18,6 @@ import com.lynnsion.lmnpuht.R;
 
 import java.io.File;
 
-/**
- * Created by Lynnsion on 2018/4/25.
- */
 
 public class MusicPlayActivity extends Activity implements View.OnClickListener {
 

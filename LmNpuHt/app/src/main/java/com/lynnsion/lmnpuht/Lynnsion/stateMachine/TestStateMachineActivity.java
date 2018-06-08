@@ -13,9 +13,6 @@ import com.lynnsion.lmnpuht.R;
 
 import java.lang.ref.WeakReference;
 
-/**
- * Created by Lynnsion on 2018/4/17.
- */
 
 public class TestStateMachineActivity extends Activity implements View.OnClickListener, UpdateUIListener {
 

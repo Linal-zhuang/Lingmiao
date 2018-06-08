@@ -8,9 +8,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Lynnsion on 2018/4/10.
- */
 
 public class FileUtil {
 

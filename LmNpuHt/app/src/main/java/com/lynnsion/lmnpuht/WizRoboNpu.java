@@ -85,11 +85,17 @@ import com.lynnsion.lmnpuht.Lynnsion.FileUtil;
 import com.lynnsion.lmnpuht.Lynnsion.MusicBroadCastReceiver;
 import com.lynnsion.lmnpuht.Lynnsion.MusicPlayActivity;
 import com.lynnsion.lmnpuht.Lynnsion.PlayMusciServices;
+import com.lynnsion.lmnpuht.Lynnsion.wifiUtil.Client;
 import com.wizrobonpu.NpuIceI;
 import com.wizrobonpu.WizRoboNpuUdp;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -445,18 +451,14 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     //定点导航
-    private Button btn2Dingdian, btnNextPose, btnCloseNpu;
+    private Button btn2Dingdian, btnNextPose, btnCloseNpu,btnDianliang;
     public static int listCount = 0, dingDianlistItem = 0;
     public static boolean isDingdianPlaying = false, isNextPlay = false;
     private Thread dingDianPlayThred, dingDianPlayNpuStateThread;
-
     private LinearLayout linearLayoutPlay, linearLayoutBtnTest;
-
     public static NaviState naviStateDingdianPlay = NaviState.IDLE;
     public static NaviState lastNaviState = NaviState.IDLE;
-
     public static ImgPose currentLXImgPose = new ImgPose(0, 0, 0);
-
     private static int playcount = 0;
 
 
@@ -470,7 +472,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
 
     //音乐播放
 
-    public static boolean isMusicPlayOnce = false, isMusicPlaying = false;
+    public static boolean isMusicPlayOnce = false, isMusicPlaying = false, is2Chongdian = false;
     private final String MUSICPATH = "/mnt/sdcard/tuPian/";
     private MediaPlayer mediaPlayer = new MediaPlayer();
     private int countId = 1;
@@ -480,24 +482,17 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     public static final int MUSICPLAYOVER = 3;
     public static final int TEST = 4;
 
+    private static String msg_data;
+    private int dianliang = 0;
+    private TextView tvTestPlayStatus, tvTestMusicStatus, tvTextNaviStatus, tvtextPlaycount,tvDianliang;
 
 
-
-
-    private TextView tvTestPlayStatus, tvTestMusicStatus, tvTextNaviStatus, tvtextPlaycount;
-
-
-    /**
-     * Called when the activity is first created.
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
         verifyStoragePermissions(WizRoboNpu.this);
-
-
 
         initLayout();
 
@@ -509,12 +504,6 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
 
             setMusicMediaPlayer(countId);
         }
-
-//        receiver = new MusicBroadCastReceiver();
-//        IntentFilter filter = new IntentFilter();
-//        filter.addAction("com.complete");
-//        registerReceiver(receiver, filter);
-
 
         // get mapName
         try {
@@ -1383,15 +1372,9 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
                 dingDianPlay();
                 isMusicPlayOnce = false;
                 break;
-
             case R.id.btnNextPose:
-//                if (isNextPlay == false) {
-//                    isNextPlay = true;
-//                    new Thread(dingDianplayRunnable2).start();
-//                }
                 gotoNextPose();
                 break;
-
 
             case R.id.btnFinishMusic:
                 if (mediaPlayer.isPlaying()) {
@@ -1429,14 +1412,17 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
             case R.id.btnCloseNpu:
                 try {
 //                    tvTextNaviStatus.setText("GetNpuState="+mynpu.GetNpuState());
-                    if(mynpu.GetNpuState() != NpuState.IDLE_STATE){
-                        Toast.makeText(WizRoboNpu.this,"请先退出导航或者扫图模式",Toast.LENGTH_SHORT).show();
-                    }else{
+                    if (mynpu.GetNpuState() != NpuState.IDLE_STATE) {
+                        Toast.makeText(WizRoboNpu.this, "请先退出导航或者扫图模式", Toast.LENGTH_SHORT).show();
+                    } else {
                         mynpu.Shutdown();
                     }
                 } catch (NpuException e) {
                     e.printStackTrace();
                 }
+                break;
+            case R.id.btnChongdian:
+                getDianliangmessage();
                 break;
 
             default:
@@ -1450,6 +1436,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         tvTestPlayStatus = (TextView) findViewById(R.id.textTestplayStatus);
         tvTextNaviStatus = (TextView) findViewById(R.id.textTestnaviStateus);
         tvtextPlaycount = (TextView) findViewById(R.id.textTestplaycount);
+        tvDianliang = (TextView) findViewById(R.id.tvDianliang);
 
         btn2Dingdian = (Button) findViewById(R.id.btnDingdianPlay);
         btn2Dingdian.setOnClickListener(this);
@@ -1469,9 +1456,12 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         btnFinishSong = (Button) findViewById(R.id.btnFinishSong);
         btnFinishSong.setOnClickListener(this);
 
-
         btnCloseNpu = (Button) findViewById(R.id.btnCloseNpu);
         btnCloseNpu.setOnClickListener(this);
+
+        btnDianliang  = (Button) findViewById(R.id.btnChongdian);
+        btnDianliang.setOnClickListener(this);
+
 
         linearLayoutPlay = (LinearLayout) findViewById(R.id.linearlayoutPlay);
         linearLayoutBtnTest = (LinearLayout) findViewById(R.id.linearBtnTest);
@@ -2113,6 +2103,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
                                         toast.show();
                                         naviMode = NaviMode.PF_NAVI;
                                         Navi();
+                                        showBtnGone();
                                     }
                                 }
                             })
@@ -2127,6 +2118,8 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
                                         toast.show();
                                         naviMode = NaviMode.P2P_NAVI;
                                         Navi();
+                                        showBtn();
+//                                        getDianliangmessage();
                                     }
 
                                 }
@@ -2134,6 +2127,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         } else if (isNavi) {
 
             Navi();
+            showBtnGone();
         }
     }
 
@@ -5320,7 +5314,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
                 case GO_POSE_SUCCESS:
                     isMusicPlaying = true;
                     playMusic(dingDianlistItem + 1);
-                    tvTextNaviStatus.setText("在附近 dingDianlistItem"+dingDianlistItem);
+                    tvTextNaviStatus.setText("在附近 dingDianlistItem" + dingDianlistItem);
                     break;
 
                 case MUSICPLAYOVER:
@@ -5339,7 +5333,7 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
                     tvTextNaviStatus.setText("不在附近");
                     break;
                 case 13:
-                    tvTextNaviStatus.setText("在附近 isMusicPlayOnce = "+ isMusicPlayOnce);
+                    tvTextNaviStatus.setText("在附近 isMusicPlayOnce = " + isMusicPlayOnce);
                     break;
                 case 14:
                     gotoNextPose();
@@ -5467,27 +5461,6 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
         }
     }
 
-//    private void playMusic(int type) {
-//        //启动服务，播放音乐
-//        Intent intent = new Intent(this, PlayMusciServices.class);
-//        intent.putExtra("type", type);
-//        startService(intent);
-//        if (type == STOP_MUSIC) {
-//            isMusicPlayOver = true;
-//            isMusicPlaying = false;
-//        }
-//    }
-//
-//
-//    private void playMusic(int type, int playItem) {
-//        //启动服务，播放音乐
-//        Intent intent = new Intent(this, PlayMusciServices.class);
-//        intent.putExtra("type", type);
-//        intent.putExtra("playItem", playItem);
-//        startService(intent);
-//    }
-
-
     private void setMusicMediaPlayer(int playID) {
         try {
             String strMusicpath = fileUtil.getMusicPath(MUSICPATH + playID);
@@ -5522,6 +5495,109 @@ public class WizRoboNpu extends AppCompatActivity implements JoystickView.Joysti
     }
 
 
+    private void chongdian() {
+        ImgStation[] stationList;
+        tvtextPlaycount.setText("");
+        String listStr = "";
+        try {
+            tvTextNaviStatus.setText(mapname);
+            stationList = mynpu.GetImgStations(mapname);
+            for (ImgStation station : stationList) {
+                listStr += station.info.id;
+                if (station.info.id.equals("Chongdian")) {
+                    listStr = station.info.id;
+                    mynpu.GotoStation(mapname, station.info.id);
+                    Toast.makeText(this, "我要去充电了", Toast.LENGTH_LONG).show();
+                }
+            }
+        } catch (NpuException e) {
+            e.printStackTrace();
+        }
+
+        tvtextPlaycount.setText(listStr);
+    }
+
+    Handler msgHandle = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 1:
+                    tvDianliang.setText("电量："+msg_data);
+                    break;
+                case 2:
+                    if (is2Chongdian == true) {
+                        chongdian();
+                        is2Chongdian = false;
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    private void getDianliangmessage() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Socket socket;
+                while (true) {
+                    try {
+                        socket = new Socket("192.168.1.32", 6666);
+                        Thread.sleep(400);
+                        DataInputStream input = new DataInputStream(socket.getInputStream());
+                        byte[] buffer;
+                        buffer = new byte[input.available()];
+                        if (buffer.length != 0) {
+                            input.read(buffer);
+
+                            byte[] tem = {buffer[6], buffer[7]};
+                            msg_data = bytesToHexFun(tem);
+
+                            int d = Integer.valueOf(msg_data.substring(1, msg_data.length()), 16);
+                            if (d < 2300) {
+                                is2Chongdian = true;
+                                Message msg_goChongdian = new Message();
+                                msg_goChongdian.what = 2;
+                                msgHandle.sendMessage(msg_goChongdian);
+                            }
+                            msg_data = "" + d;
+                            Message msg = new Message();
+                            msg.what = 1;
+                            msgHandle.sendMessage(msg);
+                        }
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public static String bytesToHexFun(byte[] bytes) {
+        StringBuilder buf = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) { // 使用String的format方法进行转换
+            buf.append(String.format("%02x", new Integer(b & 0xff)));
+        }
+
+        return buf.toString();
+    }
+
+    private void showBtn() {
+        btn2Dingdian.setVisibility(View.VISIBLE);
+        btnDianliang.setVisibility(View.VISIBLE);
+    }
+
+    private void showBtnGone() {
+        btn2Dingdian.setVisibility(View.GONE);
+        btnDianliang.setVisibility(View.GONE);
+    }
 }
 
 

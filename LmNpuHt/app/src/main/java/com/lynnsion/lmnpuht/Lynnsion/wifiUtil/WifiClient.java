@@ -14,9 +14,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 
-/**
- * Created by Lynnsion on 2018/5/5.
- */
 
 public class WifiClient extends AppCompatActivity implements View.OnClickListener {
     private EditText editText_ip, editText_data;
@@ -46,6 +43,8 @@ public class WifiClient extends AppCompatActivity implements View.OnClickListene
 
     public void connect(View view) {
         ip = editText_ip.getText().toString();
+        ip = "192.168.11.32";
+        final int port = 5555;
         if (ip == null) {
             Toast.makeText(WifiClient.this, "please input Server IP", Toast.LENGTH_SHORT).show();
         }
@@ -58,7 +57,7 @@ public class WifiClient extends AppCompatActivity implements View.OnClickListene
                 if (!socketStatus) {
 
                     try {
-                        socket = new Socket(ip, 8000);
+                        socket = new Socket(ip, port);
                         if (socket == null) {
                         } else {
                             socketStatus = true;
@@ -73,12 +72,13 @@ public class WifiClient extends AppCompatActivity implements View.OnClickListene
             }
         };
         thread.start();
-
     }
 
-    public void send(View view) {
 
-        data = editText_data.getText().toString();
+
+    public void send(View view) {
+//        data = editText_data.getText().toString();
+        data = "d0 36 61 9E 00 02 12 ed 00 ee";
         if (data == null) {
             Toast.makeText(WifiClient.this, "please input Sending Data", Toast.LENGTH_SHORT).show();
         } else {
@@ -125,6 +125,7 @@ public class WifiClient extends AppCompatActivity implements View.OnClickListene
                 break;
             case R.id.btnSendMsgClient:
                 send(v);
+                Toast.makeText(WifiClient.this, socket+"", Toast.LENGTH_LONG).show();
                 break;
             default:
                 break;

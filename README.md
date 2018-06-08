@@ -1,2 +1,2 @@
 # Lingmiao
-Lingmiao npu
+Lingmiao npu APP

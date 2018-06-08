@@ -10,9 +10,6 @@ import android.util.Log;
 
 import java.io.IOException;
 
-/**
- * Created by Lynnsion on 2018/4/11.
- */
 
 public class PlayMusciServices extends Service {
 

@@ -7,10 +7,6 @@ import android.util.Log;
 
 import com.lynnsion.lmnpuht.WizRoboNpu;
 
-/**
- * Created by Lynnsion on 2018/4/11.
- */
-
 public class MusicBroadCastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {

@@ -8,9 +8,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-/**
- * Created by Lynnsion on 2018/5/5.
- */
+
 
 public class GetIpAddress {
     public static String IP;

@@ -17,10 +17,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 
-/**
- * Created by Lynnsion on 2018/4/28.
- */
-
 public class WifiService extends AppCompatActivity implements View.OnClickListener {
 
     private EditText editMessage;
